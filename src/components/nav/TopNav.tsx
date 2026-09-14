@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, LogOut, Package, UserRound } from "lucide-react";
+import { ChevronLeft, LogIn, LogOut, Package, UserRound } from "lucide-react";
 
 import DMark from "@/components/brand/DMark";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -53,39 +53,37 @@ export function TopNav() {
             <div className="relative">
               <button
                 onClick={() => setMenuOpen((open) => !open)}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-gradient-to-r from-fuchsia-500/25 to-cyan-500/25 px-3 py-2 text-xs font-medium transition hover:brightness-125 sm:text-sm"
+                className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium hover:bg-surface-hover transition-colors"
               >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15">
-                  <UserRound size={12} />
-                </span>
-                <span className="max-w-[90px] truncate">{user.name}</span>
+                <UserRound size={16} className="text-accent" />
+                <span className="max-w-[120px] truncate">{user.name}</span>
               </button>
               <AnimatePresence>
                 {menuOpen ? (
                   <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                    className="glass-strong absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl p-2 text-sm"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    className="absolute right-0 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-surface shadow-xl z-[120]"
                   >
-                    <div className="px-3 py-2 text-xs text-white/45">
+                    <div className="px-4 py-3 text-xs text-text-secondary border-b border-border">
                       {user.email ?? user.phone}
                     </div>
                     <Link
                       href="/orders"
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 rounded-xl px-3 py-2 transition hover:bg-white/10"
+                      className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-surface-hover transition-colors"
                     >
-                      <Package size={15} /> My Orders
+                      <Package size={16} /> My Orders
                     </Link>
                     <button
                       onClick={async () => {
                         setMenuOpen(false);
                         await logout();
                       }}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-rose-300 transition hover:bg-rose-500/10"
+                      className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                     >
-                      <LogOut size={15} /> Log out
+                      <LogOut size={16} /> Log out
                     </button>
                   </motion.div>
                 ) : null}
@@ -94,10 +92,9 @@ export function TopNav() {
           ) : (
             <button
               onClick={openAuth}
-              className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-orange-400 px-4 py-2 text-xs font-semibold text-black transition hover:brightness-110 sm:text-sm"
+              className="btn-primary py-2 px-6"
             >
-              <span className="animate-shimmer absolute inset-y-0 -left-1/2 w-1/2 bg-white/40 blur-md" />
-              <span className="relative">Login</span>
+              Login
             </button>
           )}
         </div>

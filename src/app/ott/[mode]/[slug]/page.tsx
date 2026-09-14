@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 
 import OttServiceView from "@/components/ott/OttServiceView";
-import VideoBackdrop from "@/components/ui/VideoBackdrop";
-import { OTT_BG_VIDEOS, getOttService, type Mode } from "@/lib/catalog";
+import { getOttService, type Mode } from "@/lib/catalog";
 
 export default async function OttServicePage({
   params,
@@ -16,8 +15,7 @@ export default async function OttServicePage({
   if (!service) notFound();
 
   return (
-    <div className="relative">
-      <VideoBackdrop sources={OTT_BG_VIDEOS} tint="rgba(5,4,12,0.9)" />
+    <div className="relative bg-bg min-h-screen">
       <OttServiceView service={service} mode={mode as Mode} />
     </div>
   );

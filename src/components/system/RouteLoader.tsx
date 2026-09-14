@@ -1,28 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import EFootballLoader from "@/components/brand/eFootballLoader";
+import { AnimatePresence, motion } from "framer-motion";
 
-export function RouteLoader({ duration = 1200 }: { duration?: number }) {
+import MinimalLoader from "@/components/system/MinimalLoader";
+
+/**
+ * Page-transition loading screen.
+ * Minimal rotating D logo.
+ */
+export function RouteLoader() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
-  const firstRender = useRef(true);
+  const [lastPath, setLastPath] = useState(pathname);
 
-  const finish = useCallback(() => setVisible(false), []);
-
-  useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
-
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
     setVisible(true);
-    const timer = window.setTimeout(finish, duration);
-    return () => window.clearTimeout(timer);
-  }, [pathname, duration, finish]);
+    // Auto-hide after a short delay since we don't have a data-ready signal here
+    setTimeout(() => setVisible(false), 800);
+  }
 
-  return <EFootballLoader active={visible} onComplete={finish} />;
+  return (
+    <AnimatePresence>
+      {visible ? (
+        <motion.div
+          key="minimal-loader"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <MinimalLoader />
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
 }
 
 export default RouteLoader;

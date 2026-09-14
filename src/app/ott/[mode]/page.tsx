@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 
 import OttGrid from "@/components/ott/OttGrid";
-import VideoBackdrop from "@/components/ui/VideoBackdrop";
-import { OTT_BG_VIDEOS, type Mode } from "@/lib/catalog";
+import { type Mode } from "@/lib/catalog";
 
 export function generateStaticParams() {
   return [{ mode: "shared" }, { mode: "personal" }];
@@ -17,8 +16,7 @@ export default async function OttModePage({
   if (mode !== "shared" && mode !== "personal") notFound();
 
   return (
-    <div className="relative">
-      <VideoBackdrop sources={OTT_BG_VIDEOS} tint="rgba(5,4,12,0.84)" />
+    <div className="relative bg-bg min-h-screen">
       <OttGrid mode={mode as Mode} />
     </div>
   );

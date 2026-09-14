@@ -173,21 +173,12 @@ export function StoreFront({
             No titles matched your search.
           </div>
         ) : (
-          <div
-            className={
-              platform === "xbox"
-                ? "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
-                : "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
-            }
-          >
-            {filtered.map((game, index) => (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {filtered.map((game) => (
               <GameCard
                 key={game.slug}
                 game={game}
                 href={hrefFor(game.slug)}
-                index={index}
-                accent={meta.accent}
-                square={platform === "xbox"}
               />
             ))}
           </div>

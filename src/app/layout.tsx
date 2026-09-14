@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   title: "Digital Buy — Gaming Accounts & OTT Subscriptions",
   description:
     "Premium digital gaming accounts (Steam, Xbox, Ubisoft) and OTT streaming subscriptions delivered instantly in Bangladesh. Pay with bKash or Nagad.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export const viewport: Viewport = {

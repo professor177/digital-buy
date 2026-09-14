@@ -1,17 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-
-import MagneticButton from "@/components/ui/MagneticButton";
+import Link from "next/link";
 
 export type ModeOption = {
   href: string;
   label: string;
-  emoji: string;
   tagline: string;
   bullets: string[];
-  from: string;
-  to: string;
 };
 
 export function ModeChooser({
@@ -26,10 +22,10 @@ export function ModeChooser({
   return (
     <div className="relative mx-auto flex min-h-[72vh] max-w-5xl flex-col items-center justify-center px-4 text-center">
       <motion.h1
-        initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="text-3xl font-semibold tracking-tight sm:text-5xl"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="text-3xl font-bold tracking-tight sm:text-5xl"
         style={{ fontFamily: "var(--font-space-grotesk)" }}
       >
         {title}
@@ -37,57 +33,42 @@ export function ModeChooser({
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.7 }}
-        className="mt-3 max-w-lg text-sm text-white/55"
+        transition={{ delay: 0.1, duration: 0.4 }}
+        className="mt-4 max-w-lg text-sm text-text-secondary"
       >
         {subtitle}
       </motion.p>
 
-      <div className="mt-12 grid w-full gap-5 sm:grid-cols-2">
+      <div className="mt-12 grid w-full gap-6 sm:grid-cols-2">
         {options.map((option, index) => (
           <motion.div
             key={option.href}
-            initial={{ opacity: 0, y: 40, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.75, delay: 0.25 + index * 0.12, ease: [0.16, 1, 0.3, 1] }}
-            className="flex justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
           >
-            <MagneticButton
+            <Link
               href={option.href}
-              className="group w-full rounded-[26px] p-[1.5px] text-left transition-transform duration-300 hover:scale-[1.02]"
+              className="card group block p-8 text-left hover:border-accent transition-all duration-200"
             >
-              <span
-                className="absolute inset-0 rounded-[26px] opacity-70 blur-lg transition group-hover:opacity-100"
-                style={{ background: `linear-gradient(135deg, ${option.from}, ${option.to})` }}
-              />
-              <span
-                className="animate-gradient-pan absolute inset-0 rounded-[26px]"
-                style={{ background: `linear-gradient(135deg, ${option.from}, ${option.to})` }}
-              />
-              <span className="relative block rounded-[24px] bg-[#07061a]/88 p-6 backdrop-blur-xl transition group-hover:bg-[#07061a]/72">
-                <span className="mb-3 block text-3xl">{option.emoji}</span>
-                <span className="block text-xl font-bold tracking-[0.2em]">
-                  {option.label}
-                </span>
-                <span className="mt-1.5 block text-xs text-white/55">
-                  {option.tagline}
-                </span>
-                <span className="mt-4 block space-y-1.5">
-                  {option.bullets.map((bullet) => (
-                    <span key={bullet} className="flex items-center gap-2 text-[12px] text-white/65">
-                      <span
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{ background: option.to }}
-                      />
-                      {bullet}
-                    </span>
-                  ))}
-                </span>
-                <span className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-white/80 transition group-hover:gap-3">
-                  Continue →
-                </span>
+              <span className="block text-2xl font-bold tracking-widest text-text-primary uppercase">
+                {option.label}
               </span>
-            </MagneticButton>
+              <span className="mt-2 block text-sm text-text-secondary">
+                {option.tagline}
+              </span>
+              <div className="mt-6 space-y-3">
+                {option.bullets.map((bullet) => (
+                  <span key={bullet} className="flex items-center gap-3 text-xs text-text-secondary">
+                    <span className="h-1.5 w-1.5 rounded-sm bg-accent opacity-50" />
+                    {bullet}
+                  </span>
+                ))}
+              </div>
+              <span className="mt-8 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent group-hover:gap-3 transition-all">
+                Select Option
+              </span>
+            </Link>
           </motion.div>
         ))}
       </div>

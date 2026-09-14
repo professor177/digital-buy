@@ -80,27 +80,39 @@ export function OttGrid({ mode }: { mode: Mode }) {
               />
               <span className="animate-shimmer absolute -left-1/3 top-0 h-full w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-              <motion.div whileHover={{ scale: 1.1, rotate: -5 }} className="relative">
-                <PlatformLogo slug={service.slug} size={48} />
-              </motion.div>
+              <div className="relative aspect-video overflow-hidden rounded-lg mb-4 bg-bg border border-border">
+                {service.videoUrl ? (
+                  <video
+                    src={service.videoUrl}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                     <PlatformLogo slug={service.slug} size={48} />
+                  </div>
+                )}
+                <div className="absolute bottom-2 left-2">
+                   <span className="text-[9px] font-bold uppercase tracking-widest text-accent bg-bg/80 px-2 py-0.5 rounded border border-border">
+                      {service.referralCode}
+                   </span>
+                </div>
+              </div>
 
-              <h2 className="relative mt-4 text-base font-semibold">{service.name}</h2>
-              <p className="relative mt-1 text-[11px] uppercase tracking-widest text-white/40">
+              <h2 className="relative text-sm font-bold text-text-primary">{service.name}</h2>
+              <p className="relative mt-1 text-[10px] uppercase tracking-widest text-text-secondary">
                 {service.category}
               </p>
-              <p className="relative mt-2 line-clamp-2 text-xs leading-relaxed text-white/50">
-                {service.blurb}
-              </p>
-
-              <div className="relative mt-4 flex items-center justify-between">
-                <span
-                  className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider"
-                  style={{ background: `${service.brand}22`, color: service.brand }}
-                >
-                  {mode === "shared" ? "Duration based" : "Permanent"}
+              
+              <div className="relative mt-4 flex items-center justify-between border-t border-border pt-4">
+                <span className="text-[10px] font-bold text-accent">
+                  {mode === "shared" ? "Shared Profile" : "Personal Account"}
                 </span>
-                <span className="text-[11px] text-white/45 transition group-hover:text-white">
-                  View →
+                <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary group-hover:text-accent transition-colors">
+                  Details
                 </span>
               </div>
             </Link>

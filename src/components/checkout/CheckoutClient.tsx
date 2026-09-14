@@ -59,7 +59,6 @@ export function CheckoutClient({
   const [placed, setPlaced] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
-  // Human-friendly reference the buyer adds as a payment reference.
   const reference = useMemo(
     () => `DB-${item.slug.slice(0, 3).toUpperCase()}${Math.floor(1000 + Math.random() * 8999)}`,
     [item.slug],
@@ -115,238 +114,177 @@ export function CheckoutClient({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <motion.h1
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-2xl font-semibold tracking-tight sm:text-4xl"
-        style={{ fontFamily: "var(--font-space-grotesk)" }}
-      >
-        Secure <span className="text-gradient">checkout</span>
-      </motion.h1>
-      <p className="mt-2 text-sm text-white/50">
-        Manual bKash / Nagad payment — verified by our team within ~10 minutes.
+      <h1 className="text-3xl font-bold tracking-tight text-text-primary">
+        Secure Checkout
+      </h1>
+      <p className="mt-2 text-sm text-text-secondary uppercase tracking-widest">
+        Official Manual Payment
       </p>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.85fr]">
-        {/* ── payment ── */}
-        <div className="space-y-5">
-          <div className="glass rounded-3xl p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/60">
-              1 · Choose payment method
+      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_0.85fr]">
+        <div className="space-y-6">
+          <div className="card p-6">
+            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-text-secondary">
+              1 · Payment Method
             </h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {(Object.keys(METHODS) as Method[]).map((key) => {
                 const option = METHODS[key];
                 const isActive = key === method;
                 return (
-                  <motion.button
+                  <button
                     key={key}
                     onClick={() => setMethod(key)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`relative overflow-hidden rounded-2xl px-5 py-4 text-left font-semibold transition ${
-                      isActive ? "text-white" : "text-white/70"
+                    className={`relative flex flex-col rounded-lg p-5 text-left border transition-all ${
+                      isActive ? "border-accent bg-accent/5 ring-1 ring-accent" : "border-border bg-bg hover:border-border-hover"
                     }`}
-                    style={{
-                      background: isActive
-                        ? `linear-gradient(120deg, ${option.color}, ${option.color2})`
-                        : "rgba(255,255,255,0.04)",
-                      boxShadow: isActive ? `0 20px 60px -25px ${option.color}` : undefined,
-                      border: `1px solid ${isActive ? option.color : "rgba(255,255,255,0.1)"}`,
-                    }}
                   >
-                    {isActive ? (
-                      <span className="animate-shimmer absolute -left-1/3 top-0 h-full w-1/3 bg-white/25 blur-md" />
-                    ) : null}
-                    <span className="relative block text-lg">{option.name}</span>
-                    <span className="relative mt-0.5 block text-[11px] font-normal opacity-80">
+                    <span className={`text-lg font-bold ${isActive ? "text-accent" : "text-text-primary"}`}>
+                      {option.name}
+                    </span>
+                    <span className="mt-1 text-[10px] uppercase tracking-widest text-text-secondary opacity-70">
                       {option.hint}
                     </span>
-                  </motion.button>
+                  </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="glass rounded-3xl p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/60">
-              2 · Send the money
+          <div className="card p-6">
+            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-text-secondary">
+              2 · Transaction Details
             </h2>
-            {/* TODO: swap MERCHANT numbers in src/lib/catalog.ts, or automate with
-                the bKash Tokenized Checkout / Nagad Merchant API. */}
-            <div className="mt-4 space-y-3">
-              <div
-                className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3.5"
-                style={{ borderColor: `${active.color}55`, background: `${active.color}12` }}
-              >
-                <span>
-                  <span className="block text-[11px] uppercase tracking-widest text-white/45">
-                    {active.name} merchant number
-                  </span>
-                  <span className="text-lg font-semibold tracking-wider">{number}</span>
+            <div className="mt-6 space-y-4">
+              <div className="flex flex-col gap-1 p-4 rounded-lg bg-bg border border-border">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                   Send Money to
                 </span>
-                <button
-                  onClick={() => copy(number, "number")}
-                  className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-xs transition hover:bg-white/20"
-                >
-                  <Copy size={13} /> {copied === "number" ? "Copied" : "Copy"}
-                </button>
+                <div className="flex items-center justify-between">
+                   <span className="text-lg font-mono font-bold text-text-primary">{number}</span>
+                   <button onClick={() => copy(number, "num")} className="text-xs font-bold text-accent uppercase tracking-widest">
+                      {copied === "num" ? "Copied" : "Copy"}
+                   </button>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5">
-                <span>
-                  <span className="block text-[11px] uppercase tracking-widest text-white/45">
-                    Reference ID (add as reference)
-                  </span>
-                  <span className="text-lg font-semibold tracking-wider text-gradient">
-                    {reference}
-                  </span>
+              <div className="flex flex-col gap-1 p-4 rounded-lg bg-bg border border-border">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                   Reference Code
                 </span>
-                <button
-                  onClick={() => copy(reference, "ref")}
-                  className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-xs transition hover:bg-white/20"
-                >
-                  <Copy size={13} /> {copied === "ref" ? "Copied" : "Copy"}
-                </button>
+                <div className="flex items-center justify-between">
+                   <span className="text-lg font-mono font-bold text-accent">{reference}</span>
+                   <button onClick={() => copy(reference, "ref")} className="text-xs font-bold text-accent uppercase tracking-widest">
+                      {copied === "ref" ? "Copied" : "Copy"}
+                   </button>
+                </div>
               </div>
 
-              <p className="text-[11px] leading-relaxed text-white/40">
-                Dial <span className="text-white/70">{active.ussd}</span> or open the{" "}
-                {active.name} app → <b>Send Money</b> → send the exact amount to the
-                number above → include the reference ID.
+              <p className="text-[10px] leading-relaxed text-text-secondary uppercase tracking-wider text-center pt-2">
+                Use your {active.name} app or dial {active.ussd} to send the payment.
               </p>
             </div>
           </div>
 
-          <div className="glass rounded-3xl p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/60">
-              3 · Confirm your payment
+          <div className="card p-6">
+            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-text-secondary">
+              3 · Verification
             </h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-1.5 block text-xs text-white/50">
-                  Your {active.name} number
-                </span>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary px-1">Your Number</label>
                 <input
                   value={sender}
-                  onChange={(event) => setSender(event.target.value)}
+                  onChange={(e) => setSender(e.target.value)}
                   placeholder="01XXXXXXXXX"
-                  inputMode="numeric"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition focus:border-fuchsia-400/60 focus:bg-white/10"
+                  className="w-full rounded-lg border border-border bg-bg px-4 py-3 text-sm focus:border-accent outline-none transition-colors"
                 />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-xs text-white/50">Transaction ID</span>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary px-1">Transaction ID</label>
                 <input
                   value={trx}
-                  onChange={(event) => setTrx(event.target.value.toUpperCase())}
-                  placeholder="e.g. BKX7D2K91A"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm uppercase tracking-wider outline-none transition focus:border-cyan-400/60 focus:bg-white/10"
+                  onChange={(e) => setTrx(e.target.value.toUpperCase())}
+                  placeholder="TRX123456"
+                  className="w-full rounded-lg border border-border bg-bg px-4 py-3 text-sm focus:border-accent outline-none transition-colors uppercase font-mono"
                 />
-              </label>
+              </div>
             </div>
 
-            {error ? <p className="mt-3 text-xs text-rose-300">{error}</p> : null}
+            {error && <p className="mt-4 text-xs font-bold text-red-500 uppercase tracking-widest">{error}</p>}
 
-            {!user ? (
-              <p className="mt-3 flex items-center gap-2 text-xs text-amber-200/80">
-                <LockKeyhole size={13} /> Sign in first so we can attach this order to
-                your account.
-              </p>
-            ) : null}
-
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+            <button
               onClick={() => void submit()}
               disabled={busy}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-sm font-bold text-black transition disabled:opacity-60"
-              style={{ background: `linear-gradient(120deg, ${active.color}, ${active.color2}, #facc15)` }}
+              className="btn-primary w-full mt-8 py-4 gap-3 text-lg"
             >
-              {busy ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              {user ? `Submit ${active.name} payment` : "Sign in & submit"}
-            </motion.button>
+              {busy ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
+              Confirm Payment
+            </button>
           </div>
         </div>
 
-        {/* ── summary ── */}
-        <aside className="lg:sticky lg:top-28 lg:self-start">
-          <div className="glass-strong rounded-3xl p-6">
-            <div className="flex items-center gap-3">
-              <PlatformLogo slug={item.platform} size={44} />
-              <div className="min-w-0">
-                <p className="truncate text-base font-semibold">{item.title}</p>
-                <p className="truncate text-xs text-white/45">{item.subtitle}</p>
-              </div>
+        <aside className="space-y-6">
+          <div className="card p-6 border-accent/20">
+            <div className="flex items-center gap-4 border-b border-border pb-6 mb-6">
+               <PlatformLogo slug={item.platform} size={48} />
+               <div>
+                  <p className="text-sm font-bold text-text-primary uppercase tracking-widest">{item.title}</p>
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-[0.2em] mt-1">{item.subtitle}</p>
+               </div>
             </div>
 
-            <div className="mt-5 space-y-2.5 text-sm">
-              <Row label="Type" value={item.type === "game" ? "Gaming account" : "OTT subscription"} />
-              <Row label="Mode" value={item.mode === "shared" ? "Shared" : "Personal"} />
-              <Row label="Validity" value={item.validity} />
-              <Row label="Plan" value={item.planLabel} />
+            <div className="space-y-4">
+               <SummaryRow label="Plan" value={item.planLabel} />
+               <SummaryRow label="Validity" value={item.validity} />
+               <SummaryRow label="Method" value={active.name} />
             </div>
 
-            <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
-              <span className="text-xs uppercase tracking-widest text-white/45">Total</span>
-              <span className="text-xl font-bold text-gradient">{item.price}</span>
+            <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
+               <span className="text-xs font-bold text-text-secondary uppercase tracking-[0.3em]">Total</span>
+               <span className="text-2xl font-bold text-accent">{item.price}</span>
             </div>
-
-            <p className="mt-4 text-[11px] leading-relaxed text-white/40">
-              Prices are placeholders — edit them in{" "}
-              <code className="text-white/55">src/lib/catalog.ts</code>.
-            </p>
           </div>
         </aside>
       </div>
 
-      {/* ── success overlay ── */}
       <AnimatePresence>
-        {placed ? (
+        {placed && (
           <motion.div
-            className="fixed inset-0 z-[160] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-bg/95 backdrop-blur-md p-6"
           >
-            <motion.div
-              initial={{ scale: 0.9, y: 30, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 240, damping: 22 }}
-              className="glass-strong w-full max-w-md rounded-3xl p-8 text-center"
-            >
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: [0, 1.25, 1] }}
-                transition={{ duration: 0.55 }}
-                className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-lime-300 to-cyan-400 text-black"
-              >
-                <CheckCircle2 size={34} />
-              </motion.span>
-              <h3 className="text-xl font-semibold">Order received!</h3>
-              <p className="mt-2 text-sm text-white/55">
-                Reference <span className="text-white">{placed}</span> is now{" "}
-                <span className="text-amber-300">Pending</span>. We&apos;ll verify your{" "}
-                {active.name} transaction and unlock the credentials in My Orders.
+            <div className="card max-w-md w-full p-10 text-center">
+              <div className="mx-auto w-16 h-16 rounded-lg bg-accent/10 flex items-center justify-center text-accent mb-6 border border-accent/20">
+                 <CheckCircle2 size={32} />
+              </div>
+              <h3 className="text-2xl font-bold text-text-primary uppercase tracking-tight">Order Placed</h3>
+              <p className="mt-4 text-sm text-text-secondary leading-relaxed">
+                Reference <span className="text-accent font-mono font-bold">{placed}</span> has been received. 
+                We are verifying your transaction. Credentials will appear in your orders dashboard soon.
               </p>
-              <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-                <Link
-                  href="/orders"
-                  className="flex-1 rounded-2xl bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-orange-400 px-5 py-3 text-sm font-semibold text-black"
-                >
-                  Go to My Orders
+              <div className="mt-10 space-y-3">
+                <Link href="/orders" className="btn-primary w-full py-4 uppercase tracking-widest text-xs">
+                  My Orders
                 </Link>
-                <Link
-                  href="/"
-                  className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm"
-                >
-                  Keep shopping
+                <Link href="/" className="btn-secondary w-full py-4 uppercase tracking-widest text-xs">
+                  Keep Shopping
                 </Link>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
-        ) : null}
+        )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest">
+      <span className="text-text-secondary opacity-50">{label}</span>
+      <span className="text-text-primary">{value}</span>
     </div>
   );
 }

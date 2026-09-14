@@ -10,6 +10,7 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  LogIn,
   PackageOpen,
   XCircle,
 } from "lucide-react";
@@ -119,12 +120,12 @@ export default function OrdersPage() {
           Sign in with Google or your phone number to see purchased accounts and
           credentials.
         </p>
-        <button
-          onClick={openAuth}
-          className="mt-6 rounded-2xl bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-orange-400 px-6 py-3 text-sm font-semibold text-black"
-        >
-          Login / Create account
-        </button>
+        <div className="mt-6">
+          <button onClick={openAuth} className="btn-primary gap-2">
+            <LogIn size={18} />
+            Login / Create account
+          </button>
+        </div>
       </div>
     );
   }

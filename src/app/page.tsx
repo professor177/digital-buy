@@ -2,30 +2,32 @@
 
 import { motion } from "framer-motion";
 import { Gamepad2, Clapperboard, ShieldCheck, Zap, BadgeCheck } from "lucide-react";
+import Link from "next/link";
 
-import MagneticButton from "@/components/ui/MagneticButton";
 import PlatformLogo from "@/components/brand/PlatformLogo";
 
 const PORTALS = [
   {
     href: "/gaming",
     label: "GAMING",
-    emoji: "🎮",
     icon: Gamepad2,
-    copy: "Steam · Xbox · Ubisoft accounts",
-    from: "#22d3ee",
-    via: "#a855f7",
-    to: "#6366f1",
+    copy: "Shared and personal gaming accounts.",
+    accent: "var(--color-accent)",
   },
   {
     href: "/ott",
     label: "OTT",
-    emoji: "🎬",
     icon: Clapperboard,
-    copy: "Netflix · Prime · Spotify & more",
-    from: "#f472b6",
-    via: "#fb923c",
-    to: "#facc15",
+    copy: "Streaming subscriptions and profiles.",
+    accent: "var(--color-accent)",
+  },
+  {
+    href: "#",
+    label: "TOPUP",
+    icon: Zap,
+    copy: "Coming soon",
+    accent: "var(--color-border)",
+    disabled: true,
   },
 ];
 
@@ -63,75 +65,62 @@ export default function HomePage() {
         </motion.span>
 
         <motion.h1
-          initial={{ opacity: 0, y: 26, filter: "blur(12px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-4xl text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="max-w-4xl text-4xl font-bold leading-tight sm:text-6xl md:text-7xl"
           style={{ fontFamily: "var(--font-space-grotesk)" }}
         >
-          Everything digital,
+          Gaming Accounts and
           <br />
-          <span className="text-gradient animate-gradient-pan">delivered instantly.</span>
+          <span className="text-accent">OTT Subscriptions.</span>
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.18 }}
-          className="mt-5 max-w-xl text-sm leading-relaxed text-white/55 sm:text-base"
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="mt-6 max-w-xl text-lg text-text-secondary"
         >
-          Premium gaming accounts and OTT streaming subscriptions — shared or
-          permanently yours. Choose your universe.
+          The most reliable digital store in Bangladesh. Get premium shared or 
+          personal accounts delivered to your dashboard.
         </motion.p>
 
-        {/* ── The two hero portals ── */}
-        <div className="mt-12 grid w-full max-w-4xl gap-5 sm:grid-cols-2">
+        {/* ── The hero portals ── */}
+        <div className="mt-16 grid w-full max-w-6xl gap-6 sm:grid-cols-3">
           {PORTALS.map((portal, index) => {
             const Icon = portal.icon;
+            const isDisabled = portal.disabled;
+            
             return (
               <motion.div
-                key={portal.href}
-                initial={{ opacity: 0, y: 40, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  duration: 0.8,
-                  delay: 0.28 + index * 0.12,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="flex justify-center"
+                key={portal.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
               >
-                <MagneticButton
+                <Link
                   href={portal.href}
-                  strength={26}
-                  className="group w-full rounded-[28px] p-[1.5px] transition-[transform,filter] duration-300 hover:scale-[1.025]"
+                  className={`group relative flex flex-col items-center justify-center rounded-xl border border-border bg-surface p-10 text-center transition-all duration-200 ${
+                    isDisabled ? "cursor-not-allowed opacity-50" : "hover:border-accent hover:bg-surface-hover"
+                  }`}
                 >
-                  <span
-                    className="absolute inset-0 rounded-[28px] opacity-80 blur-xl transition duration-500 group-hover:opacity-100"
-                    style={{
-                      background: `linear-gradient(130deg, ${portal.from}, ${portal.via}, ${portal.to})`,
-                    }}
-                  />
-                  <span
-                    className="animate-gradient-pan absolute inset-0 rounded-[28px]"
-                    style={{
-                      background: `linear-gradient(130deg, ${portal.from}, ${portal.via}, ${portal.to})`,
-                    }}
-                  />
-                  <span className="relative flex h-full w-full flex-col items-center justify-center gap-2 rounded-[26px] bg-[#07061a]/90 px-8 py-10 backdrop-blur-xl transition group-hover:bg-[#07061a]/75">
-                    <span className="text-4xl transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-110">
-                      {portal.emoji}
-                    </span>
-                    <span className="flex items-center gap-2 text-2xl font-bold tracking-[0.22em] sm:text-3xl">
-                      <Icon size={22} className="opacity-80" />
-                      {portal.label}
-                    </span>
-                    <span className="text-xs text-white/50">{portal.copy}</span>
-                    <span
-                      className="mt-3 h-[3px] w-0 rounded-full transition-all duration-500 group-hover:w-24"
-                      style={{ background: portal.to }}
-                    />
+                  <span className={`mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-bg border border-border group-hover:border-accent transition-colors ${isDisabled ? "" : "text-accent"}`}>
+                    <Icon size={32} />
                   </span>
-                </MagneticButton>
+                  <span className="text-2xl font-bold tracking-wider">
+                    {portal.label}
+                  </span>
+                  <span className="mt-2 text-sm text-text-secondary">
+                    {portal.copy}
+                  </span>
+                  
+                  {isDisabled && (
+                    <span className="mt-4 text-xs font-bold uppercase tracking-widest text-accent">
+                      Coming soon
+                    </span>
+                  )}
+                </Link>
               </motion.div>
             );
           })}

@@ -4,16 +4,13 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 import PlatformLogo from "@/components/brand/PlatformLogo";
-import VideoBackdrop from "@/components/ui/VideoBackdrop";
-import { GAMING_BG_VIDEOS, STORE_META, gamesForPlatform } from "@/lib/catalog";
+import { STORE_META, gamesForPlatform } from "@/lib/catalog";
 
 const ORDER = ["steam", "xbox", "ubisoft"] as const;
 
 export default function SharedPlatformsPage() {
   return (
-    <div className="relative">
-      <VideoBackdrop sources={GAMING_BG_VIDEOS} tint="rgba(5,4,12,0.8)" />
-
+    <div className="relative bg-bg min-h-screen">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 18 }}

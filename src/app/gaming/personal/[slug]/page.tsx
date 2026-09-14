@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 
 import GameDetail from "@/components/game/GameDetail";
-import VideoBackdrop from "@/components/ui/VideoBackdrop";
-import { GAMING_BG_VIDEOS, getGame } from "@/lib/catalog";
+import { getGame } from "@/lib/catalog";
 
 export default async function PersonalGamePage({
   params,
@@ -14,8 +13,7 @@ export default async function PersonalGamePage({
   if (!game) notFound();
 
   return (
-    <div className="relative">
-      <VideoBackdrop sources={GAMING_BG_VIDEOS} tint="rgba(5,4,12,0.9)" />
+    <div className="relative bg-bg min-h-screen">
       <GameDetail game={game} mode="personal" />
     </div>
   );

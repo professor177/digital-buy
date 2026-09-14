@@ -64,9 +64,22 @@ export function GameDetail({
           transition={{ duration: 0.6 }}
           className="space-y-5"
         >
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black shadow-[0_30px_90px_-40px_rgba(168,85,247,0.8)]">
+          {game.videoUrl && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-surface shadow-2xl">
+              <video
+                src={game.videoUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-bg/60 to-transparent" />
+            </div>
+          )}
+
+          <div className="relative overflow-hidden rounded-lg border border-border bg-black">
             <div className="aspect-video w-full">
-              {/* TRAILER — replace trailerId in src/lib/catalog.ts with the official video id */}
               <iframe
                 className="h-full w-full"
                 src={`https://www.youtube-nocookie.com/embed/${game.trailerId}?rel=0&modestbranding=1`}
@@ -171,35 +184,33 @@ export function GameDetail({
                 <span className="text-sm text-white/70">{STORE_META[selected].name}</span>
               </div>
 
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <span className="text-xs text-white/45">Price</span>
-                {/* PRICE PLACEHOLDER — edit in src/lib/catalog.ts */}
-                <span className="text-lg font-bold text-gradient">{game.price}</span>
+              <div className="flex items-center justify-between rounded-lg border border-border bg-bg px-4 py-4">
+                <span className="text-sm text-text-secondary">Price</span>
+                <span className="text-xl font-bold text-accent">{game.price}</span>
               </div>
 
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-bg px-4 py-4">
                 {mode === "shared" ? (
-                  <CalendarClock size={18} className="text-cyan-300" />
+                  <CalendarClock size={20} className="text-accent" />
                 ) : (
-                  <InfinityIcon size={18} className="text-lime-300" />
+                  <InfinityIcon size={20} className="text-accent" />
                 )}
                 <span>
-                  <span className="block text-xs text-white/45">Validity</span>
-                  <span className="text-sm font-medium">{validity}</span>
+                  <span className="block text-xs text-text-secondary uppercase tracking-widest">Validity</span>
+                  <span className="text-sm font-semibold">{validity}</span>
                 </span>
+              </div>
+
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-bg px-4 py-4">
+                <span className="text-xs text-text-secondary uppercase tracking-widest">Referral Code</span>
+                <span className="text-sm font-mono font-bold text-accent">{game.referralCode}</span>
               </div>
 
               <Link
                 href={checkoutHref}
-                className="group relative block overflow-hidden rounded-2xl p-[1.5px]"
+                className="btn-primary w-full text-lg py-4"
               >
-                <span
-                  className="animate-gradient-pan absolute inset-0"
-                  style={{ background: `linear-gradient(120deg, ${accent}, #ec4899, #fb923c)` }}
-                />
-                <span className="relative flex items-center justify-center gap-2 rounded-[14px] bg-[#07061a] px-6 py-3.5 text-sm font-semibold transition group-hover:bg-transparent group-hover:text-black">
-                  Buy Now · bKash / Nagad
-                </span>
+                Buy Now
               </Link>
 
               <p className="flex items-center gap-2 text-[11px] leading-relaxed text-white/40">

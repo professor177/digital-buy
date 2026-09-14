@@ -33,11 +33,19 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <p className="text-[11px] uppercase tracking-[0.3em] text-white/35">Account</p>
-          <ul className="mt-3 space-y-2 text-sm text-white/55">
-            <li><Link href="/orders" className="transition hover:text-white">My Orders</Link></li>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-text-secondary">Legal</p>
+          <ul className="mt-3 space-y-2 text-sm text-text-secondary">
+            <li><Link href="/privacy" className="transition hover:text-text-primary">Privacy Policy</Link></li>
+            <li><Link href="/terms" className="transition hover:text-text-primary">Terms of Service</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-text-secondary">Account</p>
+          <ul className="mt-3 space-y-2 text-sm text-text-secondary">
+            <li><Link href="/orders" className="transition hover:text-text-primary">My Orders</Link></li>
             <li>
-              <a href={SUPPORT_MESSENGER_URL} target="_blank" rel="noreferrer" className="transition hover:text-white">
+              <a href={SUPPORT_MESSENGER_URL} target="_blank" rel="noreferrer" className="transition hover:text-text-primary">
                 Messenger support
               </a>
             </li>
@@ -45,9 +53,8 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <p className="mx-auto mt-10 max-w-7xl text-[11px] text-white/25">
-        © {new Date().getFullYear()} Digital Buy. Prices are placeholders — all
-        brand names belong to their respective owners.
+      <p className="mx-auto mt-10 max-w-7xl text-[11px] text-text-secondary opacity-50">
+        © {new Date().getFullYear()} Digital Buy. All prices in BDT.
       </p>
     </footer>
   );

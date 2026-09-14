@@ -37,20 +37,9 @@ export function DMark({
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#22d3ee" />
-          <stop offset="35%" stopColor="#a855f7" />
-          <stop offset="65%" stopColor="#ec4899" />
-          <stop offset="100%" stopColor="#fb923c" />
+          <stop offset="0%" stopColor="var(--color-accent)" />
+          <stop offset="100%" stopColor="#ffffff" />
         </linearGradient>
-        {glow ? (
-          <filter id={`${gradientId}-glow`} x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        ) : null}
       </defs>
 
       <motion.path
@@ -59,17 +48,14 @@ export function DMark({
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-        filter={glow ? `url(#${gradientId}-glow)` : undefined}
-        initial={animated ? { pathLength: 0, opacity: 0.2 } : false}
-        animate={animated ? { pathLength: 1, opacity: 1 } : undefined}
+        initial={animated ? { pathLength: 0 } : false}
+        animate={animated ? { pathLength: 1 } : undefined}
         transition={
           animated
             ? {
                 duration,
-                ease: [0.22, 0.61, 0.36, 1],
+                ease: "linear",
                 repeat: loop ? Infinity : 0,
-                repeatType: "loop",
-                repeatDelay: loop ? 0.25 : 0,
               }
             : undefined
         }
@@ -77,15 +63,8 @@ export function DMark({
       <motion.circle
         cx="34"
         cy="132"
-        r="5.5"
-        fill="#fb923c"
-        initial={animated ? { scale: 0, opacity: 0 } : false}
-        animate={animated ? { scale: [0, 1.35, 1], opacity: 1 } : undefined}
-        transition={
-          animated
-            ? { duration: 0.45, delay: duration * 0.82, repeat: loop ? Infinity : 0, repeatDelay: loop ? duration * 0.6 : 0 }
-            : undefined
-        }
+        r="6"
+        fill="var(--color-accent)"
       />
     </svg>
   );

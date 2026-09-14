@@ -6,8 +6,7 @@ import { Search, Sparkles } from "lucide-react";
 
 import GameCard from "@/components/game/GameCard";
 import PlatformLogo from "@/components/brand/PlatformLogo";
-import VideoBackdrop from "@/components/ui/VideoBackdrop";
-import { GAMES, GAMING_BG_VIDEOS, STORE_META, type StorePlatform } from "@/lib/catalog";
+import { GAMES, STORE_META, type StorePlatform } from "@/lib/catalog";
 
 const FILTERS: Array<{ key: "all" | StorePlatform; label: string }> = [
   { key: "all", label: "All platforms" },
@@ -34,9 +33,7 @@ export default function PersonalLibraryPage() {
   }, [query, filter]);
 
   return (
-    <div className="relative">
-      <VideoBackdrop sources={GAMING_BG_VIDEOS} tint="rgba(5,4,12,0.85)" />
-
+    <div className="relative bg-bg min-h-screen">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -106,13 +103,11 @@ export default function PersonalLibraryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {games.map((game, index) => (
+            {games.map((game) => (
               <GameCard
                 key={game.slug}
                 game={game}
                 href={`/gaming/personal/${game.slug}`}
-                index={index}
-                accent="#fb923c"
               />
             ))}
           </div>

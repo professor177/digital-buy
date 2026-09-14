@@ -2,32 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { ConfirmationResult, RecaptchaVerifier } from "firebase/auth";
 import { Loader2, Phone, ShieldCheck, X } from "lucide-react";
+import Link from "next/link";
 
 import DMark from "@/components/brand/DMark";
-import {
-  firebaseEnabled,
-  getFirebaseAuth,
-  getRecaptchaVerifier,
-  newGoogleProvider,
-} from "@/lib/firebase-client";
-import { normalizeBdPhone } from "@/lib/phone";
 
 type Step = "choose" | "phone" | "otp" | "done";
-
-const RECAPTCHA_CONTAINER_ID = "digital-buy-recaptcha";
-
-/** Posts a verified Firebase ID token to the server to get the db_session cookie. */
-async function establishServerSession(idToken: string, name?: string) {
-  const res = await fetch("/api/auth/firebase/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken, name }),
-  });
-  const data = (await res.json()) as { ok: boolean; error?: string };
-  if (!data.ok) throw new Error(data.error ?? "Sign-in failed");
-}
 
 export function AuthModal({
   open,
@@ -46,8 +26,6 @@ export function AuthModal({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const otpRef = useRef<HTMLInputElement>(null);
-  const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
-  const confirmationRef = useRef<ConfirmationResult | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -56,7 +34,6 @@ export function AuthModal({
         setCode("");
         setError(null);
         setHint(null);
-        confirmationRef.current = null;
       }, 250);
       return () => window.clearTimeout(t);
     }
@@ -66,64 +43,9 @@ export function AuthModal({
     if (step === "otp") otpRef.current?.focus();
   }, [step]);
 
-  // Firebase's RecaptchaVerifier needs a container mounted before use. It
-  // stays invisible — Google clears it silently for almost every real user.
-  useEffect(() => {
-    if (!open || !firebaseEnabled) return;
-    if (!recaptchaRef.current) {
-      recaptchaRef.current = getRecaptchaVerifier(RECAPTCHA_CONTAINER_ID);
-    }
-    return () => {
-      recaptchaRef.current?.clear();
-      recaptchaRef.current = null;
-    };
-  }, [open]);
-
-  async function signInWithGoogle() {
-    setBusy(true);
-    setError(null);
-    try {
-      const auth = getFirebaseAuth();
-      if (!auth) throw new Error("Google sign-in is not configured yet");
-      const { signInWithPopup } = await import("firebase/auth");
-      const result = await signInWithPopup(auth, newGoogleProvider());
-      const idToken = await result.user.getIdToken();
-      await establishServerSession(idToken, result.user.displayName ?? undefined);
-      setStep("done");
-      window.setTimeout(() => void onSuccess(), 900);
-    } catch {
-      setError("Google sign-in failed or was cancelled. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function sendOtp() {
     setBusy(true);
     setError(null);
-
-    if (firebaseEnabled) {
-      try {
-        const auth = getFirebaseAuth();
-        const e164 = normalizeBdPhone(phone);
-        if (!auth || !e164) {
-          setError("Enter a valid Bangladeshi number, e.g. 01712345678");
-          return;
-        }
-        const verifier = recaptchaRef.current;
-        if (!verifier) throw new Error("Verifier not ready");
-        const { signInWithPhoneNumber } = await import("firebase/auth");
-        confirmationRef.current = await signInWithPhoneNumber(auth, e164, verifier);
-        setHint("Code sent — verified automatically via Google where possible.");
-        setStep("otp");
-      } catch {
-        setError("Could not send OTP. Please try again in a moment.");
-      } finally {
-        setBusy(false);
-      }
-      return;
-    }
-
     try {
       const res = await fetch("/api/auth/otp/send", {
         method: "POST",
@@ -154,24 +76,6 @@ export function AuthModal({
   async function verifyOtp() {
     setBusy(true);
     setError(null);
-
-    if (firebaseEnabled) {
-      try {
-        const confirmation = confirmationRef.current;
-        if (!confirmation) throw new Error("No pending verification");
-        const result = await confirmation.confirm(code);
-        const idToken = await result.user.getIdToken();
-        await establishServerSession(idToken, name.trim() || undefined);
-        setStep("done");
-        window.setTimeout(() => void onSuccess(), 900);
-      } catch {
-        setError("Wrong or expired OTP. Request a new code.");
-      } finally {
-        setBusy(false);
-      }
-      return;
-    }
-
     try {
       const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
@@ -226,11 +130,11 @@ export function AuthModal({
               <X size={18} />
             </button>
 
-            <div className="relative mb-6 flex items-center gap-3">
-              <DMark size={34} />
+            <div className="relative mb-8 flex items-center gap-3">
+              <DMark size={40} />
               <div>
-                <p className="text-lg font-semibold tracking-tight">Digital Buy</p>
-                <p className="text-xs text-white/45">Secure account access</p>
+                <p className="text-xl font-bold tracking-tight text-text-primary">Digital Buy</p>
+                <p className="text-xs text-text-secondary uppercase tracking-widest">Client Portal</p>
               </div>
             </div>
 
@@ -238,53 +142,36 @@ export function AuthModal({
               {step === "choose" ? (
                 <motion.div
                   key="choose"
-                  initial={{ opacity: 0, x: 18 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -18 }}
-                  className="relative space-y-3"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="relative space-y-4"
                 >
-                  {/* Firebase Google popup when configured, else the legacy OAuth redirect */}
-                  {firebaseEnabled ? (
-                    <button
-                      onClick={() => void signInWithGoogle()}
-                      disabled={busy}
-                      className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-white px-5 py-3.5 font-medium text-slate-900 transition hover:scale-[1.02] hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)] active:scale-[0.99] disabled:opacity-60"
-                    >
-                      {busy ? <Loader2 className="animate-spin" size={18} /> : <GoogleGlyph />}
-                      Sign in with Google
-                    </button>
-                  ) : (
-                    <a
-                      href="/api/auth/google"
-                      className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-white px-5 py-3.5 font-medium text-slate-900 transition hover:scale-[1.02] hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)] active:scale-[0.99]"
-                    >
-                      <GoogleGlyph />
-                      Sign in with Google
-                    </a>
-                  )}
+                  <a
+                    href="/api/auth/google"
+                    className="group flex w-full items-center justify-center gap-3 rounded-lg bg-white px-5 py-3.5 font-bold text-black transition-colors hover:bg-gray-100"
+                  >
+                    <GoogleGlyph />
+                    Continue with Google
+                  </a>
 
-                  <div className="flex items-center gap-3 py-1 text-[11px] uppercase tracking-[0.3em] text-white/30">
-                    <span className="h-px flex-1 bg-white/10" />
+                  <div className="flex items-center gap-3 py-2 text-[10px] font-bold uppercase tracking-[0.3em] text-text-secondary opacity-30">
+                    <span className="h-px flex-1 bg-border" />
                     or
-                    <span className="h-px flex-1 bg-white/10" />
+                    <span className="h-px flex-1 bg-border" />
                   </div>
 
                   <button
                     onClick={() => setStep("phone")}
-                    className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/12 bg-gradient-to-r from-fuchsia-600/25 via-purple-600/20 to-cyan-500/25 px-5 py-3.5 font-medium transition hover:scale-[1.02] active:scale-[0.99]"
+                    className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-surface px-5 py-3.5 font-bold text-text-primary hover:bg-surface-hover transition-colors"
                   >
-                    <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                    <Phone size={18} />
-                    Create account with phone
+                    <Phone size={18} className="text-accent" />
+                    Login with Phone
                   </button>
 
-                  {error ? (
-                    <p className="text-center text-xs text-rose-300">{error}</p>
-                  ) : null}
-
-                  <p className="pt-2 text-center text-[11px] leading-relaxed text-white/35">
-                    Bangladesh numbers only (+880). By continuing you agree to our
-                    terms &amp; refund policy.
+                  <p className="pt-4 text-center text-[10px] font-medium leading-relaxed text-text-secondary uppercase tracking-wider">
+                    Bangladesh numbers only (+880). By signing in you agree to our 
+                    <Link href="/terms" className="text-accent ml-1 hover:underline">Terms</Link>.
                   </p>
                 </motion.div>
               ) : null}
@@ -403,9 +290,6 @@ export function AuthModal({
                 </motion.div>
               ) : null}
             </AnimatePresence>
-
-            {/* Invisible reCAPTCHA anchor for Firebase phone auth — renders nothing visible. */}
-            <div id={RECAPTCHA_CONTAINER_ID} />
           </motion.div>
         </motion.div>
       ) : null}

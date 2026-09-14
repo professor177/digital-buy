@@ -5,11 +5,8 @@ site is fully clickable before you add real credentials.
 
 | What | File | What to change |
 | --- | --- | --- |
-| **Firebase (client)** | `.env` + `src/lib/firebase-client.ts` | Add `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID` from Firebase console → Project settings. Enable **Google** and **Phone** under Authentication → Sign-in method. Once `NEXT_PUBLIC_FIREBASE_API_KEY` is set, the login modal automatically switches to Firebase for both Google (popup) and phone OTP (invisible reCAPTCHA — Google auto-clears it for almost every real visitor, closest web equivalent to Android's silent SMS verification). Without it, the old demo Google OAuth / dev-mode OTP flow below still runs. |
-| **Firebase (server/admin SDK)** | `.env` + `src/lib/firebase-admin.ts` | Add `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` from a service-account key (Project settings → Service accounts → Generate new private key). Required so `/api/auth/firebase/session` can verify ID tokens server-side before creating the session cookie. |
-| **Google OAuth keys (legacy fallback)** | `.env` + `src/app/api/auth/google/route.ts` | Add `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`. Redirect URI → `{origin}/api/auth/google/callback`. Only used while Firebase isn't configured. |
-| **OTP / SMS API (legacy fallback)** | `src/app/api/auth/otp/send/route.ts` | Replace the commented Twilio Verify / SSL Wireless block and set `SMS_PROVIDER_TOKEN`. Only used while Firebase isn't configured; while unset, the 6-digit code is returned to the UI and auto-filled (dev mode). Numbers are validated as `+8801XXXXXXXXX` in `src/lib/phone.ts`. |
-| **Admin panel login** | `.env` + `src/lib/admin-auth.ts` | Add `ADMIN_USERNAME` / `ADMIN_PASSWORD`. The very first successful login at `/admin/login` creates the first row in the `admins` table (bcrypt-hashed) and those two env vars stop mattering — add more admins or rotate the password directly in that table afterwards. This is a separate cookie/session from buyer accounts; no Google or phone sign-in is offered there. |
+| **Google OAuth keys** | `.env` + `src/app/api/auth/google/route.ts` | Add `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`. Redirect URI → `{origin}/api/auth/google/callback`. Without keys the route signs in a demo user. |
+| **OTP / SMS API** | `src/app/api/auth/otp/send/route.ts` | Replace the commented Twilio Verify / SSL Wireless block and set `SMS_PROVIDER_TOKEN`. While unset, the 6-digit code is returned to the UI and auto-filled (dev mode). Numbers are validated as `+8801XXXXXXXXX` in `src/lib/phone.ts`. |
 | **Payment verification** | `src/app/api/orders/route.ts` | Call the bKash Tokenized Checkout / Nagad Merchant API, then flip `status` from `pending` → `success` and attach credentials. |
 | **Merchant numbers** | `src/lib/catalog.ts` → `MERCHANT` | Your real bKash / Nagad numbers shown on the checkout page. |
 | **Messenger link** | `src/lib/catalog.ts` → `SUPPORT_MESSENGER_URL` | Replace `https://m.me/YOUR_PAGE` with your Facebook page inbox. |
@@ -20,24 +17,16 @@ site is fully clickable before you add real credentials.
 
 ## Data model (Drizzle, `src/db/schema.ts`)
 
-- `users` — Google, phone-OTP, or Firebase (Google/phone) accounts;
-  `firebase_uid` links a row to its Firebase identity once one exists
-- `sessions` — httpOnly cookie sessions for buyers (`db_session`)
-- `otp_codes` — 5-minute single-use codes (legacy fallback path only)
+- `users` — Google or phone-OTP accounts
+- `sessions` — httpOnly cookie sessions (`db_session`)
+- `otp_codes` — 5-minute single-use codes
 - `orders` — manual bKash/Nagad orders, `pending | success | failed`, with the
   delivered `credential_email` / `credential_password` (only served through
   `/api/orders/[id]/credentials` for the owner of a delivered order)
-- `admins` — admin panel accounts (bcrypt-hashed password), separate from `users`
-- `admin_sessions` — httpOnly cookie sessions for admins (`db_admin_session`)
 
 Apply schema changes with `npx drizzle-kit push`.
 
 ## Marking an order as delivered (admin flow)
-
-Go to **`/admin/login`**, sign in with the admin username/password, then open
-the order under the *Pending* tab and fill in status, note, and the
-credential email/password — no SQL needed. (The raw SQL below still works if
-you ever want to do it by hand.)
 
 ```sql
 UPDATE orders
@@ -54,9 +43,45 @@ The buyer then sees the credentials under **My Orders → Successful → Click t
 
 - `src/components/brand/HelloIntro.tsx` — Apple-style cursive **hello** draw
   (real lettering path, 2.5s `pathLength` animation, rainbow gradient stroke),
-  then the “Welcome to Digital Buy” fade + slide-up. Runs once per session.
-- `src/components/brand/DMark.tsx` — the **D** logo, same stroke-draw technique.
-- `src/components/system/RouteLoader.tsx` — the D redraws on every route change
-  (eFootball-style, tap anywhere to skip).
-- `src/components/ui/MagneticButton.tsx` — magnetic cursor + ripple.
+  then the “Welcome to Digital Buy” fade + slide-up. First visit of a session.
+- `src/components/brand/eFootballLoader.tsx` — the **celebration-skip loader**.
+  Phase 1 spins a metallic emblem (counter-rotating rings, breathing aura,
+  3D `rotateY` on the “D”, progress arc) over animated speed-lines; phase 2
+  fires on load-complete *or any tap/keypress*, zooming the emblem to
+  `scale: 7` with a 20px camera blur, flare rings, a white flash and a
+  split-panel wipe that reveals the page. Skip badge sits bottom-right.
+- `src/components/brand/DMark.tsx` — the **D** logo, stroke-draw technique.
+- `src/components/system/RouteLoader.tsx` — mounts the eFootball loader on
+  every route change (state derived during render, so it shows on frame 1).
+- `src/components/ui/CustomCursor.tsx` — neon dot + spring follower ring
+  (`stiffness: 250`, `damping: 20`), magnetic lock-on to any
+  `a / button / input / .magnetic-target`, cross-hair ticks on hover and a
+  shockwave ripple on mousedown. Auto-disabled on `pointer: coarse`.
+- `src/components/ui/RealisticButton.tsx` — metallic glass esports button.
+- `src/components/ui/MagneticButton.tsx` — magnetic cursor + ripple (hero cards).
 - `src/components/ui/Aurora.tsx` — animated aurora blobs, starfield, grid.
+
+### `<RealisticButton />` usage
+
+```tsx
+<RealisticButton variant="cyber" size="lg" icon={Rocket} trailingIcon={ArrowRight} href="/gaming">
+  Enter store
+</RealisticButton>
+```
+
+Variants: `cyber · violet · ember · steel · lime` — sizes: `sm · md · lg`.
+Props: `href` (renders a `Link`), `onClick`, `type`, `disabled`, `fullWidth`,
+`tiltStrength` (default `10`).
+
+> **Server Components:** React cannot serialise a component across the
+> server/client boundary, so `icon={Rocket}` only works from a Client
+> Component. From a Server Component pass a rendered node instead:
+> `icon={<Rocket size={13} />}`. Both forms are supported.
+
+### New CSS primitives (`globals.css`)
+
+`.speed-lines`, `.noise`, `.animate-emblem-spin`, `.animate-emblem-spin-rev`,
+`.animate-aura-breath`, `.animate-scan-sweep`, `.animate-skip-pulse`,
+`.animate-gloss`, and `.cursor-none-root` (native-cursor suppression, kept
+`text` over inputs). All animation work is done with GPU-friendly
+`transform` / `opacity` / `filter` and `transform-gpu`.
