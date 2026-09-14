@@ -65,17 +65,39 @@ type UpsertInput = {
   phone?: string | null;
   name?: string;
   avatarUrl?: string | null;
-  provider: "google" | "otp";
+  provider: "google" | "otp" | "firebase-google" | "firebase-phone";
+  firebaseUid?: string | null;
 };
 
 export async function upsertUser(input: UpsertInput): Promise<User> {
+  // Firebase uid is the most reliable match once a user has one.
+  if (input.firebaseUid) {
+    const existing = await db
+      .select()
+      .from(users)
+      .where(eq(users.firebaseUid, input.firebaseUid))
+      .limit(1);
+    if (existing[0]) return existing[0];
+  }
   if (input.email) {
     const existing = await db
       .select()
       .from(users)
       .where(eq(users.email, input.email))
       .limit(1);
-    if (existing[0]) return existing[0];
+    if (existing[0]) {
+      // A legacy (non-Firebase) account signed in with Firebase for the
+      // first time — link it so future logins match on firebaseUid.
+      if (input.firebaseUid && !existing[0].firebaseUid) {
+        const updated = await db
+          .update(users)
+          .set({ firebaseUid: input.firebaseUid })
+          .where(eq(users.id, existing[0].id))
+          .returning();
+        return updated[0];
+      }
+      return existing[0];
+    }
   }
   if (input.phone) {
     const existing = await db
@@ -83,7 +105,17 @@ export async function upsertUser(input: UpsertInput): Promise<User> {
       .from(users)
       .where(eq(users.phone, input.phone))
       .limit(1);
-    if (existing[0]) return existing[0];
+    if (existing[0]) {
+      if (input.firebaseUid && !existing[0].firebaseUid) {
+        const updated = await db
+          .update(users)
+          .set({ firebaseUid: input.firebaseUid })
+          .where(eq(users.id, existing[0].id))
+          .returning();
+        return updated[0];
+      }
+      return existing[0];
+    }
   }
 
   const inserted = await db
@@ -94,66 +126,12 @@ export async function upsertUser(input: UpsertInput): Promise<User> {
       phone: input.phone ?? null,
       avatarUrl: input.avatarUrl ?? null,
       provider: input.provider,
+      firebaseUid: input.firebaseUid ?? null,
     })
     .returning();
 
   const user = inserted[0];
-  // No more demo seeding for every new user.
-  // await seedDemoOrders(user.id);
   return user;
-}
-
-/**
- * DEMO DATA: gives brand-new accounts one delivered order (with credentials)
- * and one failed order so the "My Orders" page is never empty.
- * Delete this call once you wire a real fulfilment pipeline.
- */
-export async function seedDemoOrders(userId: number): Promise<void> {
-  const existing = await db
-    .select({ id: orders.id })
-    .from(orders)
-    .where(eq(orders.userId, userId))
-    .limit(1);
-  if (existing.length) return;
-
-  await db.insert(orders).values([
-    {
-      userId,
-      reference: newReference(),
-      productType: "ott",
-      productSlug: "netflix",
-      productTitle: "Netflix — Shared Profile • Premium 4K",
-      mode: "shared",
-      platform: "netflix",
-      planLabel: "Shared Profile • Premium 4K",
-      validity: "1 Month",
-      priceLabel: "৳ TBD",
-      paymentMethod: "bkash",
-      senderNumber: "+8801700000000",
-      transactionId: "BKX7D2K91A",
-      status: "success",
-      note: "Delivered instantly. Do not change the password.",
-      credentialEmail: "dbuy.netflix.7741@mailbox.com",
-      credentialPassword: "DBuy#Netflix2026",
-    },
-    {
-      userId,
-      reference: newReference(),
-      productType: "game",
-      productSlug: "call-of-duty-black-ops-6",
-      productTitle: "Call of Duty: Black Ops 6 — Steam (Shared)",
-      mode: "shared",
-      platform: "steam",
-      planLabel: "Shared Library Access",
-      validity: "1 Month",
-      priceLabel: "৳ TBD",
-      paymentMethod: "nagad",
-      senderNumber: "+8801700000000",
-      transactionId: "NGD88A21X",
-      status: "failed",
-      note: "Transaction ID could not be verified. Please contact support on Messenger.",
-    },
-  ]);
 }
 
 export async function listOrders(userId: number) {

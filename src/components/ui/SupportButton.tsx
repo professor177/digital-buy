@@ -16,13 +16,23 @@ export function SupportButton() {
       href={SUPPORT_MESSENGER_URL}
       target="_blank"
       rel="noreferrer"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 1 }}
-      className="fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-lg border border-border bg-surface px-5 py-3 text-sm font-semibold hover:bg-surface-hover transition-colors"
+      initial={{ y: 60, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.6, type: "spring", stiffness: 200, damping: 20 }}
+      whileHover={{ scale: 1.06 }}
+      whileTap={{ scale: 0.96 }}
+      className="group fixed bottom-5 left-1/2 z-[120] flex -translate-x-1/2 items-center gap-2.5 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-medium backdrop-blur-xl"
     >
-      <MessageCircle size={18} className="text-accent" />
-      <span>Support</span>
+      <span className="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-r from-cyan-500/35 to-amber-400/35 opacity-70 blur-md transition group-hover:opacity-100" />
+      <span className="relative flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-[#00b2ff] to-[#006aff]">
+        <MessageCircle size={13} className="text-white" fill="white" />
+      </span>
+      <span className="hidden sm:inline">Chat with support</span>
+      <span className="sm:hidden">Support</span>
+      <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-300 opacity-75" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-lime-400" />
+      </span>
     </motion.a>
   );
 }

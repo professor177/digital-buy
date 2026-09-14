@@ -16,20 +16,27 @@ export async function GET(request: NextRequest) {
   const origin = request.nextUrl.origin;
   const clientId = process.env.GOOGLE_CLIENT_ID;
 
-  if (!clientId) {
-    // No more demo fallback. Redirect with error if not configured.
-    return NextResponse.redirect(`${origin}/?auth_error=google_not_configured`);
+  if (clientId) {
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: `${origin}/api/auth/google/callback`,
+      response_type: "code",
+      scope: "openid email profile",
+      prompt: "select_account",
+      access_type: "offline",
+    });
+    return NextResponse.redirect(
+      `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
+    );
   }
 
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: `${origin}/api/auth/google/callback`,
-    response_type: "code",
-    scope: "openid email profile",
-    prompt: "select_account",
-    access_type: "offline",
+  // ── DEMO FALLBACK ──
+  const user = await upsertUser({
+    provider: "google",
+    email: "demo.player@digitalbuy.gg",
+    name: "Demo Player",
+    avatarUrl: null,
   });
-  return NextResponse.redirect(
-    `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
-  );
+  await createSession(user.id);
+  return NextResponse.redirect(`${origin}/?welcome=1`);
 }

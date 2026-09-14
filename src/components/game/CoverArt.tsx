@@ -31,28 +31,6 @@ export function CoverArt({
         ? "aspect-[92/43]"
         : "aspect-[16/7]";
 
-  if (game.image) {
-    return (
-      <div className={`relative w-full overflow-hidden ${ratio} ${className}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={game.image}
-          alt={game.title}
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.75),rgba(0,0,0,0.05)_45%,transparent)]" />
-        <div className="absolute inset-x-0 bottom-0 p-3">
-          <p className="text-[10px] uppercase tracking-[0.28em] text-white/60">
-            {game.studio}
-          </p>
-          <p className="mt-0.5 line-clamp-2 text-sm font-semibold leading-tight drop-shadow">
-            {game.title}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div
       className={`relative w-full overflow-hidden ${ratio} ${className}`}

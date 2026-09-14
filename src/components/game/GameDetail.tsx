@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CalendarClock, Infinity as InfinityIcon, PlayCircle, ShieldCheck, Star } from "lucide-react";
+import { CalendarClock, Infinity as InfinityIcon, PlayCircle, ShieldCheck } from "lucide-react";
 
 import CoverArt from "@/components/game/CoverArt";
 import PlatformLogo from "@/components/brand/PlatformLogo";
+import ReferralBadge from "@/components/ui/ReferralBadge";
 import { STORE_META, type Game, type Mode, type StorePlatform } from "@/lib/catalog";
+import { getReferralCode } from "@/lib/referral";
 
 export function GameDetail({
   game,
@@ -64,22 +66,9 @@ export function GameDetail({
           transition={{ duration: 0.6 }}
           className="space-y-5"
         >
-          {game.videoUrl && (
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-surface shadow-2xl">
-              <video
-                src={game.videoUrl}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-bg/60 to-transparent" />
-            </div>
-          )}
-
-          <div className="relative overflow-hidden rounded-lg border border-border bg-black">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black shadow-[0_30px_90px_-40px_rgba(168,85,247,0.8)]">
             <div className="aspect-video w-full">
+              {/* TRAILER — replace trailerId in src/lib/catalog.ts with the official video id */}
               <iframe
                 className="h-full w-full"
                 src={`https://www.youtube-nocookie.com/embed/${game.trailerId}?rel=0&modestbranding=1`}
@@ -115,10 +104,8 @@ export function GameDetail({
                 <dd className="mt-1">{game.genres.join(", ")}</dd>
               </div>
               <div>
-                <dt className="text-[11px] uppercase tracking-widest text-white/35">Rating</dt>
-                <dd className="mt-1 flex items-center gap-1 text-amber-300">
-                  <Star size={13} fill="currentColor" /> {game.rating.toFixed(1)} / 5
-                </dd>
+                <dt className="text-[11px] uppercase tracking-widest text-white/35">Delivery</dt>
+                <dd className="mt-1">Usually under 10 minutes</dd>
               </div>
             </dl>
           </div>
@@ -184,33 +171,37 @@ export function GameDetail({
                 <span className="text-sm text-white/70">{STORE_META[selected].name}</span>
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border border-border bg-bg px-4 py-4">
-                <span className="text-sm text-text-secondary">Price</span>
-                <span className="text-xl font-bold text-accent">{game.price}</span>
+              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                <span className="text-xs text-white/45">Price</span>
+                {/* PRICE PLACEHOLDER — edit in src/lib/catalog.ts */}
+                <span className="text-lg font-bold text-gradient">{game.price}</span>
               </div>
 
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-bg px-4 py-4">
+              <ReferralBadge code={getReferralCode("game", game.title)} />
+
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                 {mode === "shared" ? (
-                  <CalendarClock size={20} className="text-accent" />
+                  <CalendarClock size={18} className="text-cyan-300" />
                 ) : (
-                  <InfinityIcon size={20} className="text-accent" />
+                  <InfinityIcon size={18} className="text-lime-300" />
                 )}
                 <span>
-                  <span className="block text-xs text-text-secondary uppercase tracking-widest">Validity</span>
-                  <span className="text-sm font-semibold">{validity}</span>
+                  <span className="block text-xs text-white/45">Validity</span>
+                  <span className="text-sm font-medium">{validity}</span>
                 </span>
-              </div>
-
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-bg px-4 py-4">
-                <span className="text-xs text-text-secondary uppercase tracking-widest">Referral Code</span>
-                <span className="text-sm font-mono font-bold text-accent">{game.referralCode}</span>
               </div>
 
               <Link
                 href={checkoutHref}
-                className="btn-primary w-full text-lg py-4"
+                className="group relative block overflow-hidden rounded-2xl p-[1.5px]"
               >
-                Buy Now
+                <span
+                  className="animate-gradient-pan absolute inset-0"
+                  style={{ background: `linear-gradient(120deg, ${accent}, #ec4899, #fb923c)` }}
+                />
+                <span className="relative flex items-center justify-center gap-2 rounded-[14px] bg-[#131019] px-6 py-3.5 text-sm font-semibold transition group-hover:bg-transparent group-hover:text-black">
+                  Buy Now · bKash / Nagad
+                </span>
               </Link>
 
               <p className="flex items-center gap-2 text-[11px] leading-relaxed text-white/40">

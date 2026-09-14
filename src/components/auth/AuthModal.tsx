@@ -2,12 +2,32 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import type { ConfirmationResult, RecaptchaVerifier } from "firebase/auth";
 import { Loader2, Phone, ShieldCheck, X } from "lucide-react";
-import Link from "next/link";
 
 import DMark from "@/components/brand/DMark";
+import {
+  firebaseEnabled,
+  getFirebaseAuth,
+  getRecaptchaVerifier,
+  newGoogleProvider,
+} from "@/lib/firebase-client";
+import { normalizeBdPhone } from "@/lib/phone";
 
 type Step = "choose" | "phone" | "otp" | "done";
+
+const RECAPTCHA_CONTAINER_ID = "digital-buy-recaptcha";
+
+/** Posts a verified Firebase ID token to the server to get the db_session cookie. */
+async function establishServerSession(idToken: string, name?: string) {
+  const res = await fetch("/api/auth/firebase/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken, name }),
+  });
+  const data = (await res.json()) as { ok: boolean; error?: string };
+  if (!data.ok) throw new Error(data.error ?? "Sign-in failed");
+}
 
 export function AuthModal({
   open,
@@ -26,6 +46,8 @@ export function AuthModal({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const otpRef = useRef<HTMLInputElement>(null);
+  const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
+  const confirmationRef = useRef<ConfirmationResult | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -34,6 +56,7 @@ export function AuthModal({
         setCode("");
         setError(null);
         setHint(null);
+        confirmationRef.current = null;
       }, 250);
       return () => window.clearTimeout(t);
     }
@@ -43,9 +66,64 @@ export function AuthModal({
     if (step === "otp") otpRef.current?.focus();
   }, [step]);
 
+  // Firebase's RecaptchaVerifier needs a container mounted before use. It
+  // stays invisible — Google clears it silently for almost every real user.
+  useEffect(() => {
+    if (!open || !firebaseEnabled) return;
+    if (!recaptchaRef.current) {
+      recaptchaRef.current = getRecaptchaVerifier(RECAPTCHA_CONTAINER_ID);
+    }
+    return () => {
+      recaptchaRef.current?.clear();
+      recaptchaRef.current = null;
+    };
+  }, [open]);
+
+  async function signInWithGoogle() {
+    setBusy(true);
+    setError(null);
+    try {
+      const auth = getFirebaseAuth();
+      if (!auth) throw new Error("Google sign-in is not configured yet");
+      const { signInWithPopup } = await import("firebase/auth");
+      const result = await signInWithPopup(auth, newGoogleProvider());
+      const idToken = await result.user.getIdToken();
+      await establishServerSession(idToken, result.user.displayName ?? undefined);
+      setStep("done");
+      window.setTimeout(() => void onSuccess(), 900);
+    } catch {
+      setError("Google sign-in failed or was cancelled. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function sendOtp() {
     setBusy(true);
     setError(null);
+
+    if (firebaseEnabled) {
+      try {
+        const auth = getFirebaseAuth();
+        const e164 = normalizeBdPhone(phone);
+        if (!auth || !e164) {
+          setError("Enter a valid Bangladeshi number, e.g. 01712345678");
+          return;
+        }
+        const verifier = recaptchaRef.current;
+        if (!verifier) throw new Error("Verifier not ready");
+        const { signInWithPhoneNumber } = await import("firebase/auth");
+        confirmationRef.current = await signInWithPhoneNumber(auth, e164, verifier);
+        setHint("Code sent. Verified automatically via Google where possible.");
+        setStep("otp");
+      } catch {
+        setError("Could not send OTP. Please try again in a moment.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     try {
       const res = await fetch("/api/auth/otp/send", {
         method: "POST",
@@ -76,6 +154,24 @@ export function AuthModal({
   async function verifyOtp() {
     setBusy(true);
     setError(null);
+
+    if (firebaseEnabled) {
+      try {
+        const confirmation = confirmationRef.current;
+        if (!confirmation) throw new Error("No pending verification");
+        const result = await confirmation.confirm(code);
+        const idToken = await result.user.getIdToken();
+        await establishServerSession(idToken, name.trim() || undefined);
+        setStep("done");
+        window.setTimeout(() => void onSuccess(), 900);
+      } catch {
+        setError("Wrong or expired OTP. Request a new code.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     try {
       const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
@@ -113,13 +209,13 @@ export function AuthModal({
             exit={{ opacity: 0 }}
           />
           <motion.div
-            className="glass-strong relative w-full max-w-md overflow-hidden rounded-3xl p-7 shadow-[0_30px_120px_-20px_rgba(168,85,247,0.55)]"
+            className="glass-strong relative w-full max-w-md overflow-hidden rounded-3xl p-7 shadow-[0_30px_120px_-20px_rgba(45,212,212,0.4)]"
             initial={{ y: 60, opacity: 0, scale: 0.96 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 40, opacity: 0, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 260, damping: 26 }}
           >
-            <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-fuchsia-500/30 blur-3xl" />
+            <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-amber-400/20 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 -left-10 h-44 w-44 rounded-full bg-cyan-400/20 blur-3xl" />
 
             <button
@@ -130,11 +226,11 @@ export function AuthModal({
               <X size={18} />
             </button>
 
-            <div className="relative mb-8 flex items-center gap-3">
-              <DMark size={40} />
+            <div className="relative mb-6 flex items-center gap-3">
+              <DMark size={34} />
               <div>
-                <p className="text-xl font-bold tracking-tight text-text-primary">Digital Buy</p>
-                <p className="text-xs text-text-secondary uppercase tracking-widest">Client Portal</p>
+                <p className="text-lg font-semibold tracking-tight">Digital Buy</p>
+                <p className="text-xs text-white/45">Secure account access</p>
               </div>
             </div>
 
@@ -142,36 +238,53 @@ export function AuthModal({
               {step === "choose" ? (
                 <motion.div
                   key="choose"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="relative space-y-4"
+                  initial={{ opacity: 0, x: 18 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -18 }}
+                  className="relative space-y-3"
                 >
-                  <a
-                    href="/api/auth/google"
-                    className="group flex w-full items-center justify-center gap-3 rounded-lg bg-white px-5 py-3.5 font-bold text-black transition-colors hover:bg-gray-100"
-                  >
-                    <GoogleGlyph />
-                    Continue with Google
-                  </a>
+                  {/* Firebase Google popup when configured, else the legacy OAuth redirect */}
+                  {firebaseEnabled ? (
+                    <button
+                      onClick={() => void signInWithGoogle()}
+                      disabled={busy}
+                      className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-white px-5 py-3.5 font-medium text-slate-900 transition hover:scale-[1.02] hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)] active:scale-[0.99] disabled:opacity-60"
+                    >
+                      {busy ? <Loader2 className="animate-spin" size={18} /> : <GoogleGlyph />}
+                      Sign in with Google
+                    </button>
+                  ) : (
+                    <a
+                      href="/api/auth/google"
+                      className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-white px-5 py-3.5 font-medium text-slate-900 transition hover:scale-[1.02] hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)] active:scale-[0.99]"
+                    >
+                      <GoogleGlyph />
+                      Sign in with Google
+                    </a>
+                  )}
 
-                  <div className="flex items-center gap-3 py-2 text-[10px] font-bold uppercase tracking-[0.3em] text-text-secondary opacity-30">
-                    <span className="h-px flex-1 bg-border" />
+                  <div className="flex items-center gap-3 py-1 text-[11px] uppercase tracking-[0.3em] text-white/30">
+                    <span className="h-px flex-1 bg-white/10" />
                     or
-                    <span className="h-px flex-1 bg-border" />
+                    <span className="h-px flex-1 bg-white/10" />
                   </div>
 
                   <button
                     onClick={() => setStep("phone")}
-                    className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-surface px-5 py-3.5 font-bold text-text-primary hover:bg-surface-hover transition-colors"
+                    className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/12 bg-gradient-to-r from-cyan-500/25 via-cyan-400/15 to-amber-400/25 px-5 py-3.5 font-medium transition hover:scale-[1.02] active:scale-[0.99]"
                   >
-                    <Phone size={18} className="text-accent" />
-                    Login with Phone
+                    <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                    <Phone size={18} />
+                    Create account with phone
                   </button>
 
-                  <p className="pt-4 text-center text-[10px] font-medium leading-relaxed text-text-secondary uppercase tracking-wider">
-                    Bangladesh numbers only (+880). By signing in you agree to our 
-                    <Link href="/terms" className="text-accent ml-1 hover:underline">Terms</Link>.
+                  {error ? (
+                    <p className="text-center text-xs text-rose-300">{error}</p>
+                  ) : null}
+
+                  <p className="pt-2 text-center text-[11px] leading-relaxed text-white/35">
+                    Bangladesh numbers only (+880). By continuing you agree to our
+                    terms &amp; refund policy.
                   </p>
                 </motion.div>
               ) : null}
@@ -192,7 +305,7 @@ export function AuthModal({
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                       placeholder="e.g. Rafi Ahmed"
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition focus:border-fuchsia-400/60 focus:bg-white/10"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition focus:border-cyan-400/60 focus:bg-white/10"
                     />
                   </div>
                   <div>
@@ -218,7 +331,7 @@ export function AuthModal({
                   <button
                     onClick={() => void sendOtp()}
                     disabled={busy}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-orange-400 px-5 py-3.5 font-semibold text-black transition hover:brightness-110 disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-300 to-amber-400 px-5 py-3.5 font-semibold text-black transition hover:brightness-110 disabled:opacity-60"
                   >
                     {busy ? <Loader2 className="animate-spin" size={18} /> : null}
                     Send OTP
@@ -252,7 +365,7 @@ export function AuthModal({
                     }
                     inputMode="numeric"
                     placeholder="••••••"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-center text-2xl tracking-[0.7em] outline-none transition focus:border-fuchsia-400/60 focus:bg-white/10"
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-center text-2xl tracking-[0.7em] outline-none transition focus:border-cyan-400/60 focus:bg-white/10"
                   />
                   {hint ? (
                     <p className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-[11px] text-cyan-200">
@@ -263,7 +376,7 @@ export function AuthModal({
                   <button
                     onClick={() => void verifyOtp()}
                     disabled={busy || code.length !== 6}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 via-cyan-400 to-fuchsia-500 px-5 py-3.5 font-semibold text-black transition hover:brightness-110 disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lime-300 via-cyan-400 to-amber-400 px-5 py-3.5 font-semibold text-black transition hover:brightness-110 disabled:opacity-50"
                   >
                     {busy ? <Loader2 className="animate-spin" size={18} /> : <ShieldCheck size={18} />}
                     Verify &amp; continue
@@ -285,11 +398,14 @@ export function AuthModal({
                   className="relative flex flex-col items-center gap-3 py-6"
                 >
                   <DMark size={62} animated duration={1} />
-                  <p className="text-lg font-semibold">You&apos;re in! 🎉</p>
+                  <p className="text-lg font-semibold">You&apos;re in.</p>
                   <p className="text-sm text-white/50">Loading your dashboard…</p>
                 </motion.div>
               ) : null}
             </AnimatePresence>
+
+            {/* Invisible reCAPTCHA anchor for Firebase phone auth — renders nothing visible. */}
+            <div id={RECAPTCHA_CONTAINER_ID} />
           </motion.div>
         </motion.div>
       ) : null}

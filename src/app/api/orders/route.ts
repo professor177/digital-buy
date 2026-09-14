@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       platform: body.platform ?? null,
       planLabel: body.planLabel ?? null,
       validity: body.validity || "Permanent",
-      priceLabel: body.priceLabel || "৳ TBD",
+      priceLabel: body.priceLabel || "BDT",
       paymentMethod: body.paymentMethod === "nagad" ? "nagad" : "bkash",
       senderNumber: body.senderNumber ?? user.phone ?? null,
       transactionId: body.transactionId.trim(),

@@ -146,7 +146,7 @@ export default function AdminDashboard({ username }: { username: string }) {
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm transition ${
                 tab === key
                   ? "border-white/20 bg-white/10 text-white"
                   : "border-white/10 text-white/50 hover:text-white/80"
@@ -274,7 +274,7 @@ export default function AdminDashboard({ username }: { username: string }) {
                         <button
                           onClick={() => void save(order)}
                           disabled={!isDirty || savingId === order.id}
-                          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-orange-400 px-4 py-2 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-40"
+                          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-300 to-amber-400 px-4 py-2 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-40"
                         >
                           <Save size={14} />
                           {savingId === order.id ? "Saving…" : "Save changes"}

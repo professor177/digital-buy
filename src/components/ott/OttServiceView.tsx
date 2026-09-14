@@ -6,7 +6,9 @@ import { motion } from "framer-motion";
 import { CalendarClock, Check, Infinity as InfinityIcon, ShieldCheck } from "lucide-react";
 
 import PlatformLogo from "@/components/brand/PlatformLogo";
+import ReferralBadge from "@/components/ui/ReferralBadge";
 import type { Mode, OttService } from "@/lib/catalog";
+import { getReferralCode } from "@/lib/referral";
 
 export function OttServiceView({
   service,
@@ -78,20 +80,6 @@ export function OttServiceView({
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.5fr_1fr]">
         {/* plans */}
         <div className="space-y-5">
-          {service.videoUrl && (
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-surface shadow-2xl mb-8">
-              <video
-                src={service.videoUrl}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-bg/60 to-transparent" />
-            </div>
-          )}
-
           <h2 className="text-lg font-semibold">
             {mode === "shared" ? "Shared plans" : "Personal (permanent) plans"}
           </h2>
@@ -172,33 +160,45 @@ export function OttServiceView({
             <h3 className="mt-2 text-lg font-semibold">{service.name}</h3>
             <p className="text-xs text-white/50">{plan?.name}</p>
 
-            <div className="mt-5 space-y-3">
-              <div className="flex items-center justify-between rounded-lg border border-border bg-bg px-4 py-4">
-                <span className="text-xs text-text-secondary uppercase tracking-widest">Price</span>
-                <span className="text-lg font-bold text-accent">{plan?.price}</span>
+            <div className="mt-5 space-y-3 text-sm">
+              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                <span className="text-xs text-white/45">Price</span>
+                <span className="text-lg font-bold text-gradient">{plan?.price}</span>
               </div>
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-bg px-4 py-4">
+              <ReferralBadge code={getReferralCode("ott", service.name)} />
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                 {mode === "shared" ? (
-                  <CalendarClock size={20} className="text-accent" />
+                  <CalendarClock size={18} className="text-cyan-300" />
                 ) : (
-                  <InfinityIcon size={20} className="text-accent" />
+                  <InfinityIcon size={18} className="text-lime-300" />
                 )}
                 <span>
-                  <span className="block text-xs text-text-secondary uppercase tracking-widest">Validity</span>
-                  <span className="text-sm font-semibold">{plan?.validity}</span>
+                  <span className="block text-xs text-white/45">Validity</span>
+                  <span className="text-sm font-medium">{plan?.validity}</span>
                 </span>
               </div>
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-bg px-4 py-4">
-                <span className="text-xs text-text-secondary uppercase tracking-widest">Referral Code</span>
-                <span className="text-sm font-mono font-bold text-accent">{service.referralCode}</span>
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                <ShieldCheck size={18} className="text-amber-300" />
+                <span>
+                  <span className="block text-xs text-white/45">Screens / quality</span>
+                  <span className="text-sm font-medium">
+                    {plan?.screens} · {plan?.quality}
+                  </span>
+                </span>
               </div>
             </div>
 
             <Link
               href={checkoutHref}
-              className="btn-primary mt-6 w-full text-lg py-4"
+              className="group relative mt-5 block overflow-hidden rounded-2xl p-[1.5px]"
             >
-              Buy Now
+              <span
+                className="animate-gradient-pan absolute inset-0"
+                style={{ background: `linear-gradient(120deg, ${service.brand}, #2dd4d4, #f2b134)` }}
+              />
+              <span className="relative flex items-center justify-center gap-2 rounded-[14px] bg-[#131019] px-6 py-3.5 text-sm font-semibold transition group-hover:bg-transparent group-hover:text-black">
+                Checkout · bKash / Nagad
+              </span>
             </Link>
 
             <p className="mt-4 text-[11px] leading-relaxed text-white/40">

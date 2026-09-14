@@ -12,17 +12,25 @@ import {
  * Users can be created via Google OAuth (see /api/auth/google) or via
  * Bangladesh phone-number OTP (see /api/auth/otp/*).
  */
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().default("Digital Buy User"),
-  email: text("email"),
-  phone: text("phone"),
-  avatarUrl: text("avatar_url"),
-  provider: text("provider").notNull().default("otp"), // "google" | "otp"
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const users = pgTable(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull().default("Digital Buy User"),
+    email: text("email"),
+    phone: text("phone"),
+    avatarUrl: text("avatar_url"),
+    // "google" | "otp" | "firebase-google" | "firebase-phone"
+    provider: text("provider").notNull().default("otp"),
+    // Firebase Auth uid, set once a user signs in through Firebase
+    // (Google popup or phone auto-verification). Null for legacy/demo users.
+    firebaseUid: text("firebase_uid"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("users_firebase_uid_idx").on(table.firebaseUid)],
+);
 
 export const sessions = pgTable(
   "sessions",
@@ -74,7 +82,7 @@ export const orders = pgTable(
     platform: text("platform"), // steam | xbox | ubisoft | ott slug
     planLabel: text("plan_label"),
     validity: text("validity").notNull().default("Permanent"),
-    priceLabel: text("price_label").notNull().default("৳ TBD"),
+    priceLabel: text("price_label").notNull().default("BDT"),
     paymentMethod: text("payment_method").notNull(), // "bkash" | "nagad"
     senderNumber: text("sender_number"),
     transactionId: text("transaction_id"),
@@ -89,7 +97,15 @@ export const orders = pgTable(
   (table) => [index("orders_user_idx").on(table.userId)],
 );
 
-/** Separate admin accounts for the /admin dashboard (username + password only). */
+/**
+ * Admin panel accounts — separate from `users` (buyers). Logged in with a
+ * plain username + password (bcrypt-hashed here), never via Google/phone.
+ *
+ * Bootstrap: if this table is empty, the first successful login attempt
+ * whose username/password match ADMIN_USERNAME / ADMIN_PASSWORD in `.env`
+ * auto-creates the first row (see src/lib/admin-auth.ts). After that, edit
+ * or add admins directly in this table.
+ */
 export const admins = pgTable("admins", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),

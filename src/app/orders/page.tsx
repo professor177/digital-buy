@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  LogIn,
   PackageOpen,
   XCircle,
 } from "lucide-react";
@@ -120,12 +119,12 @@ export default function OrdersPage() {
           Sign in with Google or your phone number to see purchased accounts and
           credentials.
         </p>
-        <div className="mt-6">
-          <button onClick={openAuth} className="btn-primary gap-2">
-            <LogIn size={18} />
-            Login / Create account
-          </button>
-        </div>
+        <button
+          onClick={openAuth}
+          className="mt-6 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-300 to-amber-400 px-6 py-3 text-sm font-semibold text-black"
+        >
+          Login / Create account
+        </button>
       </div>
     );
   }
@@ -256,9 +255,9 @@ export default function OrdersPage() {
                       <AnimatePresence>
                         {credential && visible ? (
                           <motion.div
-                            initial={{ opacity: 0, height: 0, filter: "blur(8px)" }}
-                            animate={{ opacity: 1, height: "auto", filter: "blur(0px)" }}
-                            exit={{ opacity: 0, height: 0, filter: "blur(8px)" }}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
                             className="mt-3 grid gap-2 sm:grid-cols-2"
                           >
                             <CredField

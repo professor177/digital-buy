@@ -2,15 +2,19 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 import PlatformLogo from "@/components/brand/PlatformLogo";
-import { STORE_META, gamesForPlatform } from "@/lib/catalog";
+import VideoBackdrop from "@/components/ui/VideoBackdrop";
+import { GAMING_BG_VIDEOS, STORE_META, gamesForPlatform } from "@/lib/catalog";
 
 const ORDER = ["steam", "xbox", "ubisoft"] as const;
 
 export default function SharedPlatformsPage() {
   return (
-    <div className="relative bg-bg min-h-screen">
+    <div className="relative">
+      <VideoBackdrop sources={GAMING_BG_VIDEOS} tint="rgba(12,10,18,0.8)" />
+
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -73,8 +77,9 @@ export default function SharedPlatformsPage() {
                     >
                       {count} titles
                     </span>
-                    <span className="text-xs text-white/45 transition group-hover:text-white">
-                      Open store →
+                    <span className="flex items-center gap-1 text-xs text-white/45 transition group-hover:text-white">
+                      Open store
+                      <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
                     </span>
                   </div>
                 </Link>

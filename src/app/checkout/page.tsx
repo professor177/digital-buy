@@ -43,7 +43,7 @@ export default async function CheckoutPage({
       validity: mode === "shared" ? game.sharedValidity : "Permanent",
       price: game.price,
       mode,
-      accent: "var(--color-accent)",
+      accent: STORE_META[platform].accent,
     };
   } else {
     const service = getOttService(slug);
@@ -61,7 +61,7 @@ export default async function CheckoutPage({
       validity: plan.validity,
       price: plan.price,
       mode,
-      accent: "var(--color-accent)",
+      accent: service.brand,
     };
   }
 

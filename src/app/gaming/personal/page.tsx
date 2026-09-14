@@ -6,7 +6,8 @@ import { Search, Sparkles } from "lucide-react";
 
 import GameCard from "@/components/game/GameCard";
 import PlatformLogo from "@/components/brand/PlatformLogo";
-import { GAMES, STORE_META, type StorePlatform } from "@/lib/catalog";
+import VideoBackdrop from "@/components/ui/VideoBackdrop";
+import { GAMES, GAMING_BG_VIDEOS, STORE_META, type StorePlatform } from "@/lib/catalog";
 
 const FILTERS: Array<{ key: "all" | StorePlatform; label: string }> = [
   { key: "all", label: "All platforms" },
@@ -33,7 +34,9 @@ export default function PersonalLibraryPage() {
   }, [query, filter]);
 
   return (
-    <div className="relative bg-bg min-h-screen">
+    <div className="relative">
+      <VideoBackdrop sources={GAMING_BG_VIDEOS} tint="rgba(12,10,18,0.85)" />
+
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -52,7 +55,7 @@ export default function PersonalLibraryPage() {
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm text-white/50">
             Every title in one place. Choose your preferred platform on the game
-            page — your account never expires.
+            page. Your account never expires.
           </p>
           <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-lime-400/30 bg-lime-400/10 px-3 py-1 text-[11px] text-lime-200">
             <Sparkles size={12} /> No validity limit · lifetime ownership
@@ -103,11 +106,13 @@ export default function PersonalLibraryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {games.map((game) => (
+            {games.map((game, index) => (
               <GameCard
                 key={game.slug}
                 game={game}
                 href={`/gaming/personal/${game.slug}`}
+                index={index}
+                accent="#fb923c"
               />
             ))}
           </div>

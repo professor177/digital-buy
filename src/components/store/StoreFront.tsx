@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Bell, Download, Gift, Home, Library, Search, Users } from "lucide-react";
+import { ArrowRight, Bell, Download, Gift, Home, Library, Search, Users } from "lucide-react";
 
 import CoverArt from "@/components/game/CoverArt";
 import GameCard from "@/components/game/GameCard";
@@ -154,7 +154,8 @@ export function StoreFront({
                   className="mt-2 inline-flex w-fit items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-black transition hover:brightness-110"
                   style={{ background: meta.accent }}
                 >
-                  View store page →
+                  View store page
+                  <ArrowRight size={14} />
                 </Link>
               </div>
             </div>
@@ -173,12 +174,21 @@ export function StoreFront({
             No titles matched your search.
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {filtered.map((game) => (
+          <div
+            className={
+              platform === "xbox"
+                ? "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+                : "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
+            }
+          >
+            {filtered.map((game, index) => (
               <GameCard
                 key={game.slug}
                 game={game}
                 href={hrefFor(game.slug)}
+                index={index}
+                accent={meta.accent}
+                square={platform === "xbox"}
               />
             ))}
           </div>

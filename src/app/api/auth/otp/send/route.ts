@@ -56,10 +56,9 @@ export async function POST(request: Request) {
     ok: true,
     phone,
     delivered: smsConfigured,
-    // Strictly only return devCode if NOT in production AND no provider configured
-    devCode: process.env.NODE_ENV !== "production" && !smsConfigured ? code : undefined,
+    devCode: smsConfigured ? undefined : code,
     message: smsConfigured
       ? "OTP sent to your phone"
-      : "OTP sent (Development mode)",
+      : "Demo mode: OTP auto-filled (no SMS provider configured)",
   });
 }

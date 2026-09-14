@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={busy || !username || !password}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-orange-400 px-5 py-3.5 font-semibold text-black transition hover:brightness-110 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-300 to-amber-400 px-5 py-3.5 font-semibold text-black transition hover:brightness-110 disabled:opacity-60"
           >
             {busy ? <Loader2 className="animate-spin" size={18} /> : <ShieldCheck size={18} />}
             Log in
@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
         </form>
 
         <p className="mt-6 text-center text-[11px] leading-relaxed text-white/35">
-          Separate from buyer accounts — no Google or phone sign-in here.
+          Separate from buyer accounts. No Google or phone sign-in here.
         </p>
       </div>
     </main>

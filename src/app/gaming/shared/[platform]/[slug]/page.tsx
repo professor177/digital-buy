@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 
 import GameDetail from "@/components/game/GameDetail";
-import { getGame, type StorePlatform } from "@/lib/catalog";
+import VideoBackdrop from "@/components/ui/VideoBackdrop";
+import { GAMING_BG_VIDEOS, getGame, type StorePlatform } from "@/lib/catalog";
 
 const VALID: StorePlatform[] = ["steam", "xbox", "ubisoft"];
 
@@ -15,7 +16,8 @@ export default async function SharedGamePage({
   if (!game || !VALID.includes(platform as StorePlatform)) notFound();
 
   return (
-    <div className="relative bg-bg min-h-screen">
+    <div className="relative">
+      <VideoBackdrop sources={GAMING_BG_VIDEOS} tint="rgba(12,10,18,0.9)" />
       <GameDetail game={game} mode="shared" platform={platform as StorePlatform} />
     </div>
   );
