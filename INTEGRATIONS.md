@@ -85,3 +85,26 @@ Props: `href` (renders a `Link`), `onClick`, `type`, `disabled`, `fullWidth`,
 `.animate-gloss`, and `.cursor-none-root` (native-cursor suppression, kept
 `text` over inputs). All animation work is done with GPU-friendly
 `transform` / `opacity` / `filter` and `transform-gpu`.
+
+## Admin panel (/admin)
+
+A separate username+password admin dashboard lives at `/admin`, unrelated
+to customer login. It manages orders (view, mark pending/success/failed,
+attach delivered credentials).
+
+Env vars (add in Vercel → Settings → Environment Variables):
+
+```
+ADMIN_USERNAME=your_admin_username
+ADMIN_PASSWORD=your_admin_password
+```
+
+The first successful login with these credentials creates the admin row
+in the database (password stored hashed). After that, the env vars no
+longer matter — the database row is what's checked. Visit `/admin/login`
+to sign in.
+
+## Game thumbnails
+
+See `public/games/README.md` — drop images there and reference them from
+`src/lib/catalog.ts` via each game's `image` field.

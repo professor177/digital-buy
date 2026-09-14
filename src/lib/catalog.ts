@@ -17,6 +17,10 @@ export type Game = {
   description: string;
   trailerId: string;
   videoUrl?: string;
+  /** Optional real thumbnail image. Put the file in /public/games/ and set this
+   *  to its path, e.g. "/games/forza-horizon-5.jpg". Leave unset to keep the
+   *  auto-generated color art. */
+  image?: string;
   price: string;
   sharedValidity: string;
   rating: number;

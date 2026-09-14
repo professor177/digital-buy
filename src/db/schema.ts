@@ -89,5 +89,31 @@ export const orders = pgTable(
   (table) => [index("orders_user_idx").on(table.userId)],
 );
 
+/** Separate admin accounts for the /admin dashboard (username + password only). */
+export const admins = pgTable("admins", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const adminSessions = pgTable(
+  "admin_sessions",
+  {
+    token: text("token").primaryKey(),
+    adminId: integer("admin_id")
+      .notNull()
+      .references(() => admins.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("admin_sessions_admin_idx").on(table.adminId)],
+);
+
 export type User = typeof users.$inferSelect;
 export type Order = typeof orders.$inferSelect;
+export type Admin = typeof admins.$inferSelect;
