@@ -1,16 +1,20 @@
+"use client";
+
 import { Gamepad2, Users, UserRound } from "lucide-react";
 
 import ModeChooser from "@/components/ui/ModeChooser";
 import VideoBackdrop from "@/components/ui/VideoBackdrop";
-import { GAMING_BG_VIDEOS } from "@/lib/catalog";
 
-export const metadata = { title: "Gaming Accounts | Digital Buy" };
+import { GAMING_BG_VIDEOS } from "@/lib/catalog";
 
 export default function GamingPage() {
   return (
     <div className="relative">
-      {/* Muted looping gameplay montage (Forza / COD / GTA placeholders) */}
-      <VideoBackdrop sources={GAMING_BG_VIDEOS} tint="rgba(12,10,18,0.74)" />
+      <VideoBackdrop
+        sources={GAMING_BG_VIDEOS}
+        tint="rgba(12,10,18,0.74)"
+      />
+
       <ModeChooser
         title="Gaming Accounts"
         titleIcon={Gamepad2}
