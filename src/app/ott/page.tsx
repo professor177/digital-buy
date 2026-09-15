@@ -1,16 +1,20 @@
+"use client";
+
 import { Clapperboard, Users, UserRound } from "lucide-react";
 
 import ModeChooser from "@/components/ui/ModeChooser";
 import VideoBackdrop from "@/components/ui/VideoBackdrop";
 import { OTT_BG_VIDEOS } from "@/lib/catalog";
 
-export const metadata = { title: "OTT Subscriptions | Digital Buy" };
-
 export default function OttPage() {
   return (
     <div className="relative">
       {/* Muted looping series montage (Money Heist / Stranger Things placeholders) */}
-      <VideoBackdrop sources={OTT_BG_VIDEOS} tint="rgba(12,10,18,0.76)" />
+      <VideoBackdrop
+        sources={OTT_BG_VIDEOS}
+        tint="rgba(12,10,18,0.76)"
+      />
+
       <ModeChooser
         title="OTT Subscriptions"
         titleIcon={Clapperboard}
