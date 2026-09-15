@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 150" width="140" height="150">
+  <defs>
+    <linearGradient id="favicon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4d4" />
+      <stop offset="100%" stop-color="#f2b134" />
+    </linearGradient>
+  </defs>
+  <rect width="140" height="150" rx="28" fill="#0c0a12" />
+  <path
+    d="M34 132 L34 18 C96 18 122 44 122 75 C122 106 96 132 34 132"
+    fill="none"
+    stroke="url(#favicon-grad)"
+    stroke-width="14"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="34" cy="132" r="8" fill="#f2b134" />
+</svg>
