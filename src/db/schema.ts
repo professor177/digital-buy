@@ -1,0 +1,118 @@
+import {
+  index,
+  integer,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
+
+/**
+ * Users can be created via Google OAuth (see /api/auth/google) or via
+ * Firebase Phone Auth (+880 SMS sign-in).
+ */
+export const users = pgTable(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull().default("Digital Buy User"),
+    email: text("email"),
+    phone: text("phone"),
+    avatarUrl: text("avatar_url"),
+    // "google" | "firebase-google" | "firebase-phone"
+    provider: text("provider").notNull().default("otp"),
+    // Firebase Auth uid, set once a user signs in through Firebase
+    // (Google popup or phone SMS verification). Null for legacy users.
+    firebaseUid: text("firebase_uid"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("users_firebase_uid_idx").on(table.firebaseUid)],
+);
+
+export const sessions = pgTable(
+  "sessions",
+  {
+    token: text("token").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("sessions_user_idx").on(table.userId)],
+);
+
+/**
+ * Orders placed through the manual bKash / Nagad checkout.
+ * status: "pending" | "success" | "failed"
+ */
+export const orders = pgTable(
+  "orders",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    reference: text("reference").notNull(),
+    productType: text("product_type").notNull(), // "game" | "ott"
+    productSlug: text("product_slug").notNull(),
+    productTitle: text("product_title").notNull(),
+    mode: text("mode").notNull(), // "shared" | "personal"
+    platform: text("platform"), // steam | xbox | ubisoft | ott slug
+    planLabel: text("plan_label"),
+    validity: text("validity").notNull().default("Permanent"),
+    priceLabel: text("price_label").notNull().default("BDT"),
+    paymentMethod: text("payment_method").notNull(), // "bkash" | "nagad"
+    senderNumber: text("sender_number"),
+    transactionId: text("transaction_id"),
+    status: text("status").notNull().default("pending"),
+    note: text("note"),
+    credentialEmail: text("credential_email"),
+    credentialPassword: text("credential_password"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("orders_user_idx").on(table.userId)],
+);
+
+/**
+ * Admin panel accounts — separate from `users` (buyers). Logged in with a
+ * plain username + password (bcrypt-hashed here), never via Google/phone.
+ *
+ * Bootstrap: if this table is empty, the first successful login attempt
+ * whose username/password match ADMIN_USERNAME / ADMIN_PASSWORD in `.env`
+ * auto-creates the first row (see src/lib/admin-auth.ts). After that, edit
+ * or add admins directly in this table.
+ */
+export const admins = pgTable("admins", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const adminSessions = pgTable(
+  "admin_sessions",
+  {
+    token: text("token").primaryKey(),
+    adminId: integer("admin_id")
+      .notNull()
+      .references(() => admins.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("admin_sessions_admin_idx").on(table.adminId)],
+);
+
+export type User = typeof users.$inferSelect;
+export type Order = typeof orders.$inferSelect;
+export type Admin = typeof admins.$inferSelect;
