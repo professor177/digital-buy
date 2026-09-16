@@ -2,13 +2,17 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { games, orders, ottPackages, ottPlatforms, ubisoftRental } from "@/db/schema";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser, refreshVerification } from "@/lib/auth";
 import { listOrdersForUser, orderToDto } from "@/lib/data";
 import { isValidTxnId, type AccountMode } from "@/lib/shared";
 
 export async function GET() {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "signin_required" }, { status: 401 });
+  const verification = await refreshVerification(user);
+  if (!verification.verified) {
+    return NextResponse.json({ error: "email_unverified" }, { status: 403 });
+  }
   return NextResponse.json(await listOrdersForUser(user.id));
 }
 
@@ -23,6 +27,12 @@ interface CreateOrderBody {
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "signin_required" }, { status: 401 });
+
+  // Gate purchases on a freshly-reloaded Firebase verification state.
+  const verification = await refreshVerification(user);
+  if (!verification.verified) {
+    return NextResponse.json({ error: "email_unverified" }, { status: 403 });
+  }
 
   let body: CreateOrderBody;
   try {

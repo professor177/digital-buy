@@ -21,20 +21,17 @@ export async function POST(req: Request) {
   }
 
   if (!isFirebaseAdminConfigured()) {
-    return NextResponse.json(
-      { error: "auth_not_configured" },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "auth_not_configured" }, { status: 503 });
   }
 
   try {
     const decoded = await getFirebaseAdminAuth().verifyIdToken(idToken, true);
-    const phone = decoded.phone_number;
-    if (!phone) {
-      return NextResponse.json(
-        { error: "phone_required" },
-        { status: 400 },
-      );
+    // Reload the user record server-side so email + emailVerified are fresh
+    // from Firebase, never the client-cached claims inside the token.
+    const record = await getFirebaseAdminAuth().getUser(decoded.uid);
+    const email = record.email ?? null;
+    if (!email) {
+      return NextResponse.json({ error: "email_required" }, { status: 400 });
     }
 
     const existing = await db
@@ -47,28 +44,43 @@ export async function POST(req: Request) {
     if (!user) {
       const inserted = await db
         .insert(users)
-        .values({ firebaseUid: decoded.uid, phone })
+        .values({
+          firebaseUid: decoded.uid,
+          email,
+          emailVerified: record.emailVerified,
+          nickname: record.displayName ?? null,
+        })
         .returning();
       user = inserted[0];
-    } else if (user.phone !== phone) {
-      const updated = await db
-        .update(users)
-        .set({ phone })
-        .where(eq(users.id, user.id))
-        .returning();
-      user = updated[0];
+    } else {
+      const patch: Partial<typeof users.$inferInsert> = {};
+      if (email !== user.email) patch.email = email;
+      if (record.emailVerified !== user.emailVerified)
+        patch.emailVerified = record.emailVerified;
+      if (!user.nickname && record.displayName)
+        patch.nickname = record.displayName;
+      if (Object.keys(patch).length > 0) {
+        const updated = await db
+          .update(users)
+          .set(patch)
+          .where(eq(users.id, user.id))
+          .returning();
+        user = updated[0];
+      }
     }
 
     await createSession(user.id);
     return NextResponse.json({
-      user: { id: user.id, phone: user.phone, nickname: user.nickname },
+      user: {
+        id: user.id,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        nickname: user.nickname,
+      },
     });
   } catch (err) {
     console.error("Session creation failed:", err);
-    return NextResponse.json(
-      { error: "invalid_token" },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "invalid_token" }, { status: 401 });
   }
 }
 

@@ -1,21 +1,21 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  RecaptchaVerifier,
-  PhoneAuthProvider,
-  signInWithCredential,
-  signInWithPhoneNumber,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
   signOut,
-  type ConfirmationResult,
+  updateProfile,
 } from "firebase/auth";
-import { KeyRound, ShieldCheck, Smartphone } from "lucide-react";
+import { KeyRound, LogIn, Mail, ShieldCheck, UserPlus } from "lucide-react";
 import {
   getFirebaseAuth,
   isFirebaseClientConfigured,
 } from "@/lib/firebase-client";
-import { toE164Bd } from "@/lib/shared";
+import { VerifyEmailCard } from "@/components/verify-email";
 
 function authErrorCode(err: unknown): string {
   return typeof err === "object" && err !== null && "code" in err
@@ -26,8 +26,8 @@ function authErrorCode(err: unknown): string {
 /**
  * Error codes that mean the Firebase project itself is misconfigured for
  * this deployment. Only these (or missing env vars) may surface the
- * "sign in is being configured" screen. Anything else (reCAPTCHA hiccups,
- * network failures, rate limits, bad codes) shows a regular inline error.
+ * "sign in is being configured" screen. Everything else shows an inline
+ * error so the real cause never gets hidden.
  */
 const CONFIG_ERROR_CODES = new Set([
   "auth/invalid-api-key",
@@ -38,6 +38,38 @@ const CONFIG_ERROR_CODES = new Set([
   "auth/unauthorized-domain",
 ]);
 
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+function mapAuthError(err: unknown, context: "login" | "signup"): string {
+  const code = authErrorCode(err);
+  switch (code) {
+    case "auth/invalid-email":
+      return "That email address does not look right. Check for typos.";
+    case "auth/email-already-in-use":
+      return "An account with this email already exists. Switch to Log in and use your password, or reset it below.";
+    case "auth/weak-password":
+      return "That password is too weak. Use at least 8 characters with letters and numbers.";
+    case "auth/user-not-found":
+      return "No account exists with that email. Create one first.";
+    case "auth/wrong-password":
+    case "auth/invalid-credential":
+      return context === "login"
+        ? "Email or password is incorrect. Double check, or use Forgot password to reset it."
+        : "Those credentials were rejected. Check the email and password.";
+    case "auth/user-disabled":
+      return "This account has been disabled. Contact support for help.";
+    case "auth/too-many-requests":
+      return "Too many attempts from this device. Wait a few minutes and try again.";
+    case "auth/network-request-failed":
+      return "Network error while contacting the sign-in service. Check your connection and retry.";
+
+    default:
+      return context === "signup"
+        ? "Could not create the account right now. Please try again."
+        : "Could not log you in right now. Please try again.";
+  }
+}
+
 function ConfigNoticePanel() {
   return (
     <div className="w-full max-w-md rounded-lg border border-line bg-panel p-8 text-center">
@@ -46,254 +78,386 @@ function ConfigNoticePanel() {
         Sign in is being configured
       </h1>
       <p className="mt-3 text-sm leading-6 text-fog">
-        Phone verification is not connected on this deployment yet. Once the
-        Firebase keys are added to the environment, sign in with OTP will
-        work here exactly as designed. No test codes and no bypasses are
-        wired in.
+        Email sign-in is not connected on this deployment yet. Once the
+        Firebase keys are added to the environment, creating an account and
+        logging in will work here exactly as designed.
       </p>
     </div>
   );
 }
 
-function mapAuthError(err: unknown): string {
-  const code = authErrorCode(err);
-  switch (code) {
-    case "auth/invalid-phone-number":
-      return "That phone number does not look right. Enter your 11 digit bKash era number like 01XXXXXXXXX.";
-    case "auth/too-many-requests":
-      return "Too many attempts from this device. Please wait a few minutes and try again.";
-    case "auth/quota-exceeded":
-      return "SMS quota reached for today. Please try again tomorrow.";
-    case "auth/invalid-verification-code":
-      return "That code is not correct. Check the SMS and enter it again.";
-    case "auth/code-expired":
-      return "That code has expired. Request a fresh code.";
-    case "auth/captcha-check-failed":
-    case "auth/invalid-app-credential":
-      return "reCAPTCHA could not verify this browser. Refresh the page and try again.";
-    case "auth/network-request-failed":
-      return "Network error while contacting the verification service. Check your connection and retry.";
-    default:
-      return "Something went wrong while signing you in. Please try again.";
-  }
-}
-
 export function LoginCard({ next }: { next: string }) {
   const router = useRouter();
-  const [stage, setStage] = useState<"phone" | "code">("phone");
-  const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
+  const [tab, setTab] = useState<"login" | "signup">("login");
+  const [stage, setStage] = useState<"auth" | "verify">("auth");
+  const [configBroken, setConfigBroken] = useState(false);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sentTo, setSentTo] = useState("");
-  const verifierRef = useRef<RecaptchaVerifier | null>(null);
-  const confirmationRef = useRef<ConfirmationResult | null>(null);
-  const recaptchaSlot = useRef<HTMLDivElement | null>(null);
-  const [configBroken, setConfigBroken] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [verifyEmail, setVerifyEmail] = useState("");
 
   if (!isFirebaseClientConfigured() || configBroken) {
     return <ConfigNoticePanel />;
   }
 
-  async function sendCode(e?: React.FormEvent) {
-    e?.preventDefault();
+  function handleFailure(err: unknown, context: "login" | "signup") {
+    if (CONFIG_ERROR_CODES.has(authErrorCode(err))) {
+      setConfigBroken(true);
+      return;
+    }
+    setError(mapAuthError(err, context));
+  }
+
+  /** Creates the server session and routes to verify gate or destination. */
+  async function finalizeAndRoute() {
+    const auth = getFirebaseAuth();
+    const user = auth.currentUser;
+    if (!user) throw new Error("no_user");
+    // Reload so emailVerified is fresh from Firebase, not a cached claim.
+    await user.reload();
+    const idToken = await user.getIdToken(true);
+    const res = await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    if (!res.ok) {
+      await signOut(auth).catch(() => undefined);
+      const body = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      throw new Error(body?.error ?? "session_failed");
+    }
+    if (user.emailVerified) {
+      router.replace(next);
+      router.refresh();
+    } else {
+      setVerifyEmail(user.email ?? email.trim());
+      setStage("verify");
+    }
+  }
+
+  async function submitSignup(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
-    const e164 = toE164Bd(phone);
-    if (!e164) {
-      setError("Enter a valid Bangladeshi number like 01XXXXXXXXX.");
+    setNotice(null);
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    if (trimmedName.length < 2) {
+      setError("Enter your name (at least 2 characters).");
+      return;
+    }
+    if (!EMAIL_RE.test(trimmedEmail)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+      setError("Use at least 8 characters with a mix of letters and numbers.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("The two passwords do not match.");
       return;
     }
     setBusy(true);
     try {
       const auth = getFirebaseAuth();
-      if (verifierRef.current) {
-        try {
-          verifierRef.current.clear();
-        } catch {
-          /* already cleared */
-        }
-        verifierRef.current = null;
-      }
-      const verifier = new RecaptchaVerifier(auth, recaptchaSlot.current!, {
-        size: "invisible",
-      });
-      verifierRef.current = verifier;
-      const confirmation = await signInWithPhoneNumber(auth, e164, verifier);
-      confirmationRef.current = confirmation;
-      setSentTo(e164);
-      setStage("code");
-    } catch (err) {
-      if (CONFIG_ERROR_CODES.has(authErrorCode(err))) {
-        // Genuine misconfiguration (bad keys, provider off, domain not
-        // whitelisted): show the config notice, nothing else.
-        setConfigBroken(true);
-      } else {
-        setError(mapAuthError(err));
+      if (auth.currentUser) await signOut(auth).catch(() => undefined);
+      const cred = await createUserWithEmailAndPassword(auth, trimmedEmail, password);
+      try {
+        await updateProfile(cred.user, { displayName: trimmedName });
+      } catch {
+        /* nickname can be set later from account settings */
       }
       try {
-        verifierRef.current?.clear();
-      } catch {
-        /* noop */
+        await sendEmailVerification(cred.user);
+        setNotice(`Verification email sent to ${trimmedEmail}.`);
+      } catch (verifyErr) {
+        setNotice(
+          authErrorCode(verifyErr) === "auth/too-many-requests"
+            ? "Account created. Verification email could not be sent yet due to rate limits; use Resend on the next screen."
+            : "Account created. The verification email did not send; use Resend on the next screen.",
+        );
       }
-      verifierRef.current = null;
+      await finalizeAndRoute();
+    } catch (err) {
+      if (err instanceof Error && err.message === "session_failed") {
+        setError("Signed up on Firebase, but the server session failed. Try logging in once.");
+      } else if (err instanceof Error && err.message === "auth_not_configured") {
+        setConfigBroken(true);
+      } else {
+        handleFailure(err, "signup");
+      }
     } finally {
       setBusy(false);
     }
   }
 
-  async function verifyCode(e: React.FormEvent) {
+  async function submitLogin(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const cleaned = code.replace(/\D/g, "");
-    if (cleaned.length !== 6) {
-      setError("Enter the 6 digit code from the SMS.");
+    setNotice(null);
+    const trimmedEmail = email.trim();
+    if (!EMAIL_RE.test(trimmedEmail)) {
+      setError("Enter a valid email address.");
       return;
     }
-    const confirmation = confirmationRef.current;
-    if (!confirmation) {
-      setStage("phone");
-      setError("Session expired. Please request a new code.");
+    if (!password) {
+      setError("Enter your password.");
       return;
     }
     setBusy(true);
     try {
       const auth = getFirebaseAuth();
-      const credential = PhoneAuthProvider.credential(
-        confirmation.verificationId,
-        cleaned,
-      );
-      const userCred = await signInWithCredential(auth, credential);
-      const idToken = await userCred.user.getIdToken();
-      const res = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-      if (!res.ok) {
-        await signOut(auth).catch(() => undefined);
-        const body = (await res.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        throw new Error(body?.error ?? "session_failed");
-      }
-      router.replace(next);
-      router.refresh();
+      if (auth.currentUser) await signOut(auth).catch(() => undefined);
+      await signInWithEmailAndPassword(auth, trimmedEmail, password);
+      await finalizeAndRoute();
     } catch (err) {
+      if (err instanceof Error && err.message === "session_failed") {
+        setError("Logged in on Firebase, but the server session failed. Please try again.");
+      } else if (err instanceof Error && err.message === "auth_not_configured") {
+        setConfigBroken(true);
+      } else {
+        handleFailure(err, "login");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitReset(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setNotice(null);
+    const trimmed = resetEmail.trim();
+    if (!EMAIL_RE.test(trimmed)) {
+      setError("Enter the email you used to create your account.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await sendPasswordResetEmail(getFirebaseAuth(), trimmed);
+      setNotice(
+        `If an account exists for ${trimmed}, a password reset link is on its way. Check inbox and spam.`,
+      );
+      setShowReset(false);
+    } catch (err) {
+      const code = authErrorCode(err);
       setError(
-        err instanceof Error && err.message === "auth_not_configured"
-          ? "The server could not verify your sign in because server keys are not configured yet. Please contact support."
-          : err instanceof Error && err.message === "session_failed"
-            ? "Signed in on your phone, but the server session could not be created. Please try again."
-            : mapAuthError(err),
+        code === "auth/too-many-requests"
+          ? "Too many reset emails requested. Wait a few minutes and try again."
+          : code === "auth/network-request-failed"
+            ? "Network error. Check your connection and try again."
+            : code === "auth/invalid-email"
+              ? "That email address does not look right. Check for typos."
+              : code === "auth/user-not-found"
+                ? "No account exists with that email."
+                : "Could not send the reset email right now. Try again in a moment.",
       );
     } finally {
       setBusy(false);
     }
+  }
+
+  if (stage === "verify") {
+    return (
+      <VerifyEmailCard
+        email={verifyEmail}
+        onVerified={async () => {
+          router.replace(next);
+          router.refresh();
+        }}
+      />
+    );
   }
 
   return (
     <div className="w-full max-w-md">
       <div className="rounded-lg border border-line bg-panel p-7 sm:p-8">
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">
-          {stage === "phone" ? "Sign in" : "Enter the SMS code"}
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-fog">
-          {stage === "phone"
-            ? "We verify your phone with a one time code over SMS. No passwords to remember."
-            : `A 6 digit code was sent to ${sentTo}. It usually arrives within a minute.`}
+        {/* Tab switch: Create account / Log in */}
+        <div className="grid grid-cols-2 gap-1 rounded-md border border-line bg-ink p-1">
+          <button
+            type="button"
+            onClick={() => {
+              setTab("login");
+              setError(null);
+              setNotice(null);
+              setShowReset(false);
+            }}
+            className={`flex items-center justify-center gap-2 rounded-[5px] px-3 py-2.5 text-sm font-bold transition-colors ${
+              tab === "login" ? "bg-brand text-[#06140c]" : "text-fog hover:text-white"
+            }`}
+          >
+            <LogIn size={15} /> Log in
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTab("signup");
+              setError(null);
+              setNotice(null);
+              setShowReset(false);
+            }}
+            className={`flex items-center justify-center gap-2 rounded-[5px] px-3 py-2.5 text-sm font-bold transition-colors ${
+              tab === "signup" ? "bg-brand text-[#06140c]" : "text-fog hover:text-white"
+            }`}
+          >
+            <UserPlus size={15} /> Create account
+          </button>
+        </div>
+
+        <p className="mt-5 text-sm leading-6 text-fog">
+          Create an account with your email, or log in if you already have
+          one. Verification and password reset emails come straight from
+          Firebase.
         </p>
 
-        {stage === "phone" ? (
-          <form onSubmit={sendCode} className="mt-6 space-y-4">
+        {tab === "signup" ? (
+          <form onSubmit={submitSignup} className="mt-6 space-y-4">
             <div>
-              <label className="eyebrow mb-2 block" htmlFor="phone">
-                Phone number
-              </label>
-              <div className="flex items-stretch gap-2">
-                <span className="grid place-items-center rounded-md border border-line bg-panel2 px-3 text-sm font-bold text-fog">
-                  +880
-                </span>
-                <input
-                  id="phone"
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  placeholder="1XXXXXXXXX"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="field"
-                  maxLength={11}
-                />
-              </div>
+              <label className="eyebrow mb-2 block" htmlFor="name">Name</label>
+              <input
+                id="name"
+                className="field"
+                autoComplete="name"
+                placeholder="Your name"
+                value={name}
+                maxLength={40}
+                onChange={(e) => setName(e.target.value)}
+              />
             </div>
-            {error && (
-              <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-                {error}
-              </p>
-            )}
-            <button
-              type="submit"
-              disabled={busy}
-              className="btn btn-brand w-full px-5 py-3 text-sm"
-            >
-              <Smartphone size={16} />
-              {busy ? "Sending code..." : "Send verification code"}
+            <div>
+              <label className="eyebrow mb-2 block" htmlFor="signup-email">Email</label>
+              <input
+                id="signup-email"
+                type="email"
+                className="field"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="eyebrow mb-2 block" htmlFor="signup-password">Password</label>
+              <input
+                id="signup-password"
+                type="password"
+                className="field"
+                autoComplete="new-password"
+                placeholder="At least 8 characters, letters and numbers"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="eyebrow mb-2 block" htmlFor="confirm-password">Confirm password</label>
+              <input
+                id="confirm-password"
+                type="password"
+                className="field"
+                autoComplete="new-password"
+                placeholder="Repeat the password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+              />
+            </div>
+            {error && <ErrorNote>{error}</ErrorNote>}
+            {notice && <OkNote>{notice}</OkNote>}
+            <button type="submit" disabled={busy} className="btn btn-brand w-full px-5 py-3 text-sm">
+              <UserPlus size={16} />
+              {busy ? "Creating account..." : "Create account"}
             </button>
             <p className="text-xs leading-5 text-fog/70">
-              Protected by reCAPTCHA. Standard SMS charges from your operator
-              may apply.
+              We email you a verification link right away. You need it before
+              placing orders.
             </p>
           </form>
         ) : (
-          <form onSubmit={verifyCode} className="mt-6 space-y-4">
+          <form onSubmit={submitLogin} className="mt-6 space-y-4">
             <div>
-              <label className="eyebrow mb-2 block" htmlFor="otp">
-                Verification code
-              </label>
+              <label className="eyebrow mb-2 block" htmlFor="login-email">Email</label>
               <input
-                id="otp"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="6 digit code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="field text-center text-lg tracking-[0.5em]"
-                maxLength={6}
+                id="login-email"
+                type="email"
+                className="field"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            {error && (
-              <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-                {error}
-              </p>
-            )}
-            <button
-              type="submit"
-              disabled={busy}
-              className="btn btn-brand w-full px-5 py-3 text-sm"
-            >
-              <KeyRound size={16} />
-              {busy ? "Verifying..." : "Verify and sign in"}
-            </button>
-            <div className="flex items-center justify-between text-sm">
-              <button
-                type="button"
-                onClick={() => {
-                  setStage("phone");
-                  setCode("");
-                  setError(null);
-                }}
-                className="font-semibold text-fog hover:text-white"
-              >
-                Use a different number
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => sendCode()}
-                className="font-semibold text-brand hover:underline"
-              >
-                Resend code
-              </button>
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="eyebrow" htmlFor="login-password">Password</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReset((s) => !s);
+                    setResetEmail((prev) => prev || email);
+                    setError(null);
+                    setNotice(null);
+                  }}
+                  className="text-xs font-bold text-brand hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <input
+                id="login-password"
+                type="password"
+                className="field"
+                autoComplete="current-password"
+                placeholder="Your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
+
+            {showReset && (
+              <div className="rounded-md border border-line bg-ink p-4">
+                <p className="flex items-center gap-2 text-sm font-bold text-white">
+                  <KeyRound size={14} className="text-brand" /> Reset your password
+                </p>
+                <p className="mt-1 text-xs leading-5 text-fog">
+                  We will email you a reset link. It comes from Firebase and
+                  works even if you cannot log in.
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <input
+                    type="email"
+                    className="field"
+                    placeholder="you@example.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={submitReset}
+                    className="btn btn-brand shrink-0 px-4 py-2 text-sm"
+                  >
+                    <Mail size={14} /> Send
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {error && <ErrorNote>{error}</ErrorNote>}
+            {notice && <OkNote>{notice}</OkNote>}
+            <button type="submit" disabled={busy} className="btn btn-brand w-full px-5 py-3 text-sm">
+              <LogIn size={16} />
+              {busy ? "Logging in..." : "Log in"}
+            </button>
           </form>
         )}
       </div>
@@ -315,9 +479,22 @@ export function LoginCard({ next }: { next: string }) {
           NOT AVAILABLE YET
         </span>
       </button>
-
-      {/* reCAPTCHA mounts here (invisible) */}
-      <div ref={recaptchaSlot} />
     </div>
+  );
+}
+
+function ErrorNote({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+      {children}
+    </p>
+  );
+}
+
+function OkNote({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rounded-md border border-brand/30 bg-brand/10 px-3 py-2 text-sm text-brand">
+      {children}
+    </p>
   );
 }

@@ -23,6 +23,7 @@ import {
   type OrderDto,
   type PaymentMethod,
 } from "@/lib/shared";
+import { VerifyEmailCard } from "@/components/verify-email";
 
 interface BuyBoxProps {
   itemType: ItemType;
@@ -130,14 +131,28 @@ export function BuyBox({
   const [loadingOrder, setLoadingOrder] = useState(authed);
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
+  const [me, setMe] = useState<{
+    email: string | null;
+    emailVerified: boolean;
+  } | null>(null);
 
   const loadExisting = useCallback(async () => {
     if (!authed) return;
     setLoadingOrder(true);
     try {
-      const res = await fetch("/api/orders", { cache: "no-store" });
-      if (res.ok) {
-        const list = (await res.json()) as OrderDto[];
+      // /api/me re-reads emailVerified fresh from Firebase on every call.
+      const [meRes, ordersRes] = await Promise.all([
+        fetch("/api/me", { cache: "no-store" }),
+        fetch("/api/orders", { cache: "no-store" }),
+      ]);
+      if (meRes.ok) {
+        const body = (await meRes.json()) as {
+          user: { email: string | null; emailVerified: boolean };
+        };
+        setMe({ email: body.user.email, emailVerified: body.user.emailVerified });
+      }
+      if (ordersRes.ok) {
+        const list = (await ordersRes.json()) as OrderDto[];
         const match = list.find(
           (o) =>
             o.itemType === itemType &&
@@ -182,6 +197,13 @@ export function BuyBox({
       const body = (await res.json().catch(() => null)) as
         | { order?: OrderDto; error?: string }
         | null;
+      if (res.status === 403 && body?.error === "email_unverified") {
+        setMe((prev) => ({
+          email: prev?.email ?? null,
+          emailVerified: false,
+        }));
+        return;
+      }
       if (res.status === 409) {
         await loadExisting();
         setRetrying(false);
@@ -231,7 +253,8 @@ export function BuyBox({
           <LogIn size={16} /> Sign in to buy
         </Link>
         <p className="mt-3 text-center text-xs leading-5 text-fog/70">
-          Quick phone sign in with a one time SMS code. No password required.
+          Use your Digital Buy email and password. New here? Account creation
+          takes a minute.
         </p>
       </div>
     );
@@ -243,6 +266,16 @@ export function BuyBox({
         <div className="h-14 animate-pulse rounded-md bg-panel2" />
         <div className="h-24 animate-pulse rounded-md bg-panel2" />
       </div>
+    );
+  }
+
+  // Verified email is required before any purchase can be submitted.
+  if (me && !me.emailVerified) {
+    return (
+      <VerifyEmailCard
+        email={me.email ?? ""}
+        onVerified={() => loadExisting()}
+      />
     );
   }
 

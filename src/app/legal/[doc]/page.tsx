@@ -15,14 +15,14 @@ const DOCS: Record<
       {
         h: "What we collect",
         body: [
-          "When you sign in we store your phone number, which is verified through Firebase Authentication (a Google service). We also store the nickname you choose, your orders, the payment method you select, and the transaction ID you submit.",
+          "When you create an account we store your name and the email address you register with, both handled and verified through Firebase Authentication (a Google service). We also store the nickname you choose, your orders, the payment method you select, and the transaction ID you submit.",
           "We do not store passwords, card numbers, or bKash/Nagad PINs. Ever.",
         ],
       },
       {
         h: "How we use it",
         body: [
-          "Your phone number identifies your account and lets us match payments to orders. Your transaction ID is used only to verify that specific payment with our bKash or Nagad merchant statement.",
+          "Your email address identifies your account and lets us match payments to orders. Your transaction ID is used only to verify that specific payment with our bKash or Nagad merchant statement.",
           "We do not sell, rent, or share your personal data with advertisers. Credentials we issue are visible only inside your signed-in account.",
         ],
       },

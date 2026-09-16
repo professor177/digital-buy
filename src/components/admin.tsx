@@ -36,7 +36,8 @@ interface AdminOrder {
   credentials: string | null;
   adminNote: string | null;
   createdAt: string;
-  userPhone: string;
+  userEmail: string | null;
+  userPhone: string | null;
   userNickname: string | null;
 }
 
@@ -315,7 +316,7 @@ function OrdersPanel() {
                   <p className="font-bold text-white">{o.itemLabel}</p>
                   <p className="mt-0.5 text-xs text-fog">
                     {o.userNickname ? `${o.userNickname} | ` : ""}
-                    {o.userPhone}
+                    {o.userEmail ?? o.userPhone ?? "unknown user"}
                     {o.accountType ? ` | ${o.accountType}` : ""}
                   </p>
                 </div>

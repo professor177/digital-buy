@@ -8,7 +8,8 @@ export type ItemType = "game" | "ott_package" | "ubisoft";
 
 export interface PublicUser {
   id: number;
-  phone: string;
+  email: string | null;
+  emailVerified: boolean;
   nickname: string | null;
 }
 
@@ -124,13 +125,6 @@ export function slugify(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
-}
-
-export function toE164Bd(input: string): string | null {
-  const digits = input.replace(/\D/g, "");
-  if (/^8801[3-9]\d{8}$/.test(digits)) return `+${digits}`;
-  if (/^01[3-9]\d{8}$/.test(digits)) return `+880${digits.slice(1)}`;
-  return null;
 }
 
 export function isValidTxnId(input: string): boolean {

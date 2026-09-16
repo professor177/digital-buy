@@ -13,7 +13,11 @@ import {
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   firebaseUid: text("firebase_uid").notNull().unique(),
-  phone: text("phone").notNull(),
+  email: text("email"),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  // Legacy column from the retired phone-OTP flow; kept nullable so old
+  // rows stay intact. New accounts use email only.
+  phone: text("phone"),
   nickname: text("nickname"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

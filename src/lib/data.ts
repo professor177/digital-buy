@@ -160,7 +160,8 @@ export async function listOrdersForUser(userId: number): Promise<OrderDto[]> {
 }
 
 export interface AdminOrderDto extends OrderDto {
-  userPhone: string;
+  userEmail: string | null;
+  userPhone: string | null;
   userNickname: string | null;
   adminNote: string | null;
 }
@@ -174,6 +175,7 @@ export async function listAllOrders(): Promise<AdminOrderDto[]> {
   return rows.map(({ order, user }) => ({
     ...orderToDto(order),
     credentials: order.credentials,
+    userEmail: user.email,
     userPhone: user.phone,
     userNickname: user.nickname,
     adminNote: order.adminNote,

@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 import { and, eq, gt } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users, type User } from "@/db/schema";
+import {
+  getFirebaseAdminAuth,
+  isFirebaseAdminConfigured,
+} from "@/lib/firebase-admin";
 
 export const SESSION_COOKIE = "db_session";
 export const ADMIN_COOKIE = "db_admin";
@@ -56,6 +60,42 @@ export async function getSessionUser(): Promise<User | null> {
   } catch (err) {
     console.error("Session lookup failed:", err);
     return null;
+  }
+}
+
+export interface VerificationState {
+  verified: boolean;
+  email: string | null;
+  /** false when Firebase Admin is unavailable and the stored flag was used. */
+  fresh: boolean;
+}
+
+/**
+ * Reads emailVerified FRESH from Firebase (never a cached ID-token claim or
+ * our own stale copy) and syncs it into the users row. Used to gate orders
+ * and account settings. Falls back to the stored flag only when the Admin
+ * SDK is not configured on this deployment.
+ */
+export async function refreshVerification(
+  user: User,
+): Promise<VerificationState> {
+  if (!isFirebaseAdminConfigured()) {
+    return { verified: user.emailVerified, email: user.email, fresh: false };
+  }
+  try {
+    const record = await getFirebaseAdminAuth().getUser(user.firebaseUid);
+    const verified = record.emailVerified;
+    const email = record.email ?? user.email;
+    const patch: Partial<typeof users.$inferInsert> = {};
+    if (verified !== user.emailVerified) patch.emailVerified = verified;
+    if (email && email !== user.email) patch.email = email;
+    if (Object.keys(patch).length > 0) {
+      await db.update(users).set(patch).where(eq(users.id, user.id));
+    }
+    return { verified, email, fresh: true };
+  } catch (err) {
+    console.error("Verification refresh failed:", err);
+    return { verified: user.emailVerified, email: user.email, fresh: false };
   }
 }
 

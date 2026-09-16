@@ -2,15 +2,22 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser, refreshVerification } from "@/lib/auth";
 
 const NICKNAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,23}$/u;
 
 export async function GET() {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  // Verification status is always re-read fresh from Firebase here.
+  const verification = await refreshVerification(user);
   return NextResponse.json({
-    user: { id: user.id, phone: user.phone, nickname: user.nickname },
+    user: {
+      id: user.id,
+      email: verification.email,
+      emailVerified: verification.verified,
+      nickname: user.nickname,
+    },
   });
 }
 
@@ -40,7 +47,8 @@ export async function PATCH(req: Request) {
   return NextResponse.json({
     user: {
       id: updated.id,
-      phone: updated.phone,
+      email: updated.email,
+      emailVerified: updated.emailVerified,
       nickname: updated.nickname,
     },
   });

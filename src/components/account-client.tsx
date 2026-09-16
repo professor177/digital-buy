@@ -2,11 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, CircleUserRound, LogOut, Phone } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { Check, CircleUserRound, LogOut, Mail } from "lucide-react";
+import {
+  getFirebaseAuth,
+  isFirebaseClientConfigured,
+} from "@/lib/firebase-client";
 
 interface AccountUser {
   id: number;
-  phone: string;
+  email: string | null;
   nickname: string | null;
   createdAt: string;
 }
@@ -48,11 +53,17 @@ export function AccountCard({ user }: { user: AccountUser }) {
 
   async function logout() {
     setBusy(true);
-    await fetch("/api/auth/session", { method: "DELETE" }).catch(
-      () => undefined,
-    );
-    router.replace("/");
-    router.refresh();
+    try {
+      if (isFirebaseClientConfigured()) {
+        await signOut(getFirebaseAuth()).catch(() => undefined);
+      }
+      await fetch("/api/auth/session", { method: "DELETE" }).catch(
+        () => undefined,
+      );
+    } finally {
+      router.replace("/");
+      router.refresh();
+    }
   }
 
   return (
@@ -96,10 +107,10 @@ export function AccountCard({ user }: { user: AccountUser }) {
             </p>
           </div>
           <div>
-            <label className="eyebrow mb-2 block">Phone</label>
+            <label className="eyebrow mb-2 block">Email</label>
             <div className="flex items-center gap-2.5 rounded-md border border-line bg-ink px-3.5 py-3 text-sm font-semibold text-fog">
-              <Phone size={14} /> {user.phone}
-              <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-fog/60">
+              <Mail size={14} /> {user.email ?? "Not set"}
+              <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-brand">
                 Verified
               </span>
             </div>
