@@ -1,18 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 150" width="140" height="150">
-  <defs>
-    <linearGradient id="favicon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2dd4d4" />
-      <stop offset="100%" stop-color="#f2b134" />
-    </linearGradient>
-  </defs>
-  <rect width="140" height="150" rx="28" fill="#0c0a12" />
-  <path
-    d="M34 132 L34 18 C96 18 122 44 122 75 C122 106 96 132 34 132"
-    fill="none"
-    stroke="url(#favicon-grad)"
-    stroke-width="14"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <circle cx="34" cy="132" r="8" fill="#f2b134" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#0a0c0b"/>
+  <rect x="4" y="4" width="56" height="56" rx="9" fill="none" stroke="#35e27f" stroke-width="2.5"/>
+  <path d="M25 20v24h6.4c6.9 0 11.6-4.6 11.6-12S38.3 20 31.4 20H25zm6.2 4.5h.4c4.3 0 7 2.9 7 7.5s-2.7 7.5-7 7.5h-.4v-15z" fill="#35e27f"/>
+  <circle cx="47.5" cy="40.5" r="3" fill="#35e27f"/>
 </svg>

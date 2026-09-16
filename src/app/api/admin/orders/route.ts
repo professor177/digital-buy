@@ -1,28 +1,64 @@
-import { desc, eq } from "drizzle-orm";
-
+import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { orders, users } from "@/db/schema";
-import { getSessionAdmin } from "@/lib/admin-auth";
-
-export const dynamic = "force-dynamic";
+import { orders } from "@/db/schema";
+import { isAdmin } from "@/lib/auth";
+import { listAllOrders } from "@/lib/data";
 
 export async function GET() {
-  const admin = await getSessionAdmin();
-  if (!admin) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+  return NextResponse.json(await listAllOrders());
+}
 
-  const rows = await db
-    .select({
-      order: orders,
-      buyerName: users.name,
-      buyerEmail: users.email,
-      buyerPhone: users.phone,
+interface PatchBody {
+  id?: string;
+  action?: string;
+  credentials?: string;
+  note?: string;
+}
+
+export async function PATCH(req: Request) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+  let body: PatchBody;
+  try {
+    body = (await req.json()) as PatchBody;
+  } catch {
+    return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  }
+  const { id, action } = body;
+  if (typeof id !== "string" || (action !== "verify" && action !== "reject")) {
+    return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  }
+
+  const credentials = typeof body.credentials === "string" ? body.credentials.trim() : "";
+  const note = typeof body.note === "string" ? body.note.trim() : "";
+
+  if (action === "verify" && credentials.length < 3) {
+    return NextResponse.json(
+      { error: "credentials_required" },
+      { status: 422 },
+    );
+  }
+
+  const [updated] = await db
+    .update(orders)
+    .set({
+      status: action === "verify" ? "verified" : "rejected",
+      credentials: action === "verify" ? credentials : null,
+      adminNote: note || null,
+      updatedAt: new Date(),
     })
-    .from(orders)
-    .innerJoin(users, eq(users.id, orders.userId))
-    .orderBy(desc(orders.createdAt), desc(orders.id));
+    .where(eq(orders.id, id))
+    .returning();
 
-  return Response.json({
-    ok: true,
-    orders: rows.map((r) => ({ ...r.order, buyerName: r.buyerName, buyerEmail: r.buyerEmail, buyerPhone: r.buyerPhone })),
-  });
+  if (!updated) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  const all = await listAllOrders();
+  return NextResponse.json({ order: all.find((o) => o.id === updated.id) });
 }

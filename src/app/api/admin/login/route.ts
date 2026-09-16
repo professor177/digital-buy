@@ -1,30 +1,29 @@
-import { createAdminSession, verifyAdminCredentials } from "@/lib/admin-auth";
+import { NextResponse } from "next/server";
+import { loginAdmin, logoutAdmin } from "@/lib/auth";
 
-export const dynamic = "force-dynamic";
-
-export async function POST(request: Request) {
-  const body = (await request.json().catch(() => ({}))) as {
-    username?: string;
-    password?: string;
-  };
-  const username = (body.username ?? "").trim();
-  const password = body.password ?? "";
-
-  if (!username || !password) {
-    return Response.json(
-      { ok: false, error: "Username and password are required" },
-      { status: 400 },
+export async function POST(req: Request) {
+  let key: unknown;
+  try {
+    const body = (await req.json()) as { key?: unknown };
+    key = body.key;
+  } catch {
+    return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  }
+  if (typeof key !== "string") {
+    return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  }
+  if (!process.env.ADMIN_KEY) {
+    return NextResponse.json(
+      { error: "admin_not_configured" },
+      { status: 503 },
     );
   }
+  const ok = await loginAdmin(key);
+  if (!ok) return NextResponse.json({ error: "invalid_key" }, { status: 401 });
+  return NextResponse.json({ ok: true });
+}
 
-  const admin = await verifyAdminCredentials(username, password);
-  if (!admin) {
-    return Response.json(
-      { ok: false, error: "Invalid username or password" },
-      { status: 401 },
-    );
-  }
-
-  await createAdminSession(admin.id);
-  return Response.json({ ok: true, admin: { id: admin.id, username: admin.username } });
+export async function DELETE() {
+  await logoutAdmin();
+  return NextResponse.json({ ok: true });
 }

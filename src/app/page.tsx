@@ -1,240 +1,191 @@
-"use client";
+import Link from "next/link";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  BadgeCheck,
+  ClipboardList,
+  Gamepad2,
+  Lock,
+  LogIn,
+  MessagesSquare,
+  Smartphone,
+  Tv,
+  Wallet,
+} from "lucide-react";
+import { getSessionUser } from "@/lib/auth";
+import { SUPPORT_URL } from "@/lib/shared";
 
-import { motion } from "framer-motion";
-import { Gamepad2, Clapperboard, ShieldCheck, Zap, BadgeCheck, Wallet, Lock } from "lucide-react";
-
-import MagneticButton from "@/components/ui/MagneticButton";
-import PlatformLogo from "@/components/brand/PlatformLogo";
-
-const PORTALS = [
-  {
-    href: "/gaming",
-    label: "GAMING",
-    icon: Gamepad2,
-    copy: "Steam · Xbox · Ubisoft accounts",
-    from: "#2dd4d4",
-    via: "#38bdf8",
-    to: "#6366f1",
-  },
-  {
-    href: "/ott",
-    label: "OTT",
-    icon: Clapperboard,
-    copy: "Netflix · Prime · Spotify & more",
-    from: "#f2b134",
-    via: "#fb923c",
-    to: "#ec4899",
-  },
-];
-
-const LOCKED_PORTAL = {
-  label: "TOPUP",
-  icon: Wallet,
-  copy: "Game & app top-ups, coming soon",
+const HERO_MEDIA = {
+  games:
+    "https://images.pexels.com/photos/8107826/pexels-photo-8107826.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
+  ott: "https://images.pexels.com/photos/7991436/pexels-photo-7991436.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
 };
 
-const TRUST = [
-  { icon: Zap, title: "Instant delivery", copy: "Most orders within 10 minutes" },
-  { icon: ShieldCheck, title: "Warranty included", copy: "Replacement on any issue" },
-  { icon: BadgeCheck, title: "bKash & Nagad", copy: "Pay the local way, no cards" },
-];
-
-const MARQUEE = [
-  "steam",
-  "xbox",
-  "ubisoft",
-  "netflix",
-  "spotify",
-  "prime-video",
-  "hbo-max",
-  "disney-plus-hotstar",
-  "youtube-premium",
-  "crunchyroll",
-];
-
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getSessionUser();
   return (
-    <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-      <section className="flex min-h-[78vh] flex-col items-center justify-center py-10 text-center">
-        <motion.span
-          initial={{ opacity: 0, y: -14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="glass mb-6 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[11px] uppercase tracking-[0.32em] text-white/65"
-        >
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime-400" />
-          Bangladesh&apos;s digital store
-        </motion.span>
+    <div className="fade-up">
+      {/* Hero */}
+      <section className="border-b border-line">
+        <div className="wrap pb-14 pt-16 sm:pb-20 sm:pt-24">
+          <p className="eyebrow flex items-center gap-2 text-fog">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand" />
+            Dhaka, Bangladesh | Digital delivery
+          </p>
+          <h1 className="mt-5 text-[13.5vw] font-extrabold leading-[0.92] tracking-[-0.03em] text-white sm:text-7xl lg:text-[92px]">
+            GAMES AND
+            <br />
+            STREAMING,
+            <br />
+            <span className="text-brand">DELIVERED.</span>
+          </h1>
+          <p className="mt-6 max-w-xl text-[15px] leading-7 text-fog">
+            PC game accounts for Steam, Xbox, and the full Ubisoft library, plus
+            OTT packages for Netflix and Spotify. You pay with bKash or Nagad,
+            we verify the transaction, and your access appears on your order
+            page.
+          </p>
+        </div>
+      </section>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="max-w-4xl text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl"
-          style={{ fontFamily: "var(--font-space-grotesk)" }}
-        >
-          Gaming accounts and streaming subscriptions,
-          <br />
-          <span className="text-gradient animate-gradient-pan">verified and delivered within minutes.</span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.18 }}
-          className="mt-5 max-w-xl text-sm leading-relaxed text-white/55 sm:text-base"
-        >
-          Pay with bKash or Nagad and get Steam, Xbox, Netflix, Spotify and more. Shared plans cost less; personal accounts are yours to keep.
-        </motion.p>
-
-        {/* ── Hero portals: Gaming, OTT, and a locked Topup preview ── */}
-        <div className="mt-12 grid w-full max-w-5xl gap-5 sm:grid-cols-3">
-          {PORTALS.map((portal, index) => {
-            const Icon = portal.icon;
-            return (
-              <motion.div
-                key={portal.href}
-                initial={{ opacity: 0, y: 40, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  duration: 0.8,
-                  delay: 0.28 + index * 0.12,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="flex justify-center"
-              >
-                <MagneticButton
-                  href={portal.href}
-                  strength={26}
-                  className="group w-full rounded-[28px] p-[1.5px] transition-[transform,filter] duration-300 hover:scale-[1.025]"
-                >
-                  <span
-                    className="absolute inset-0 rounded-[28px] opacity-80 blur-xl transition duration-500 group-hover:opacity-100"
-                    style={{
-                      background: `linear-gradient(130deg, ${portal.from}, ${portal.via}, ${portal.to})`,
-                    }}
-                  />
-                  <span
-                    className="animate-gradient-pan absolute inset-0 rounded-[28px]"
-                    style={{
-                      background: `linear-gradient(130deg, ${portal.from}, ${portal.via}, ${portal.to})`,
-                    }}
-                  />
-                  <span className="relative flex h-full w-full flex-col items-center justify-center gap-2 rounded-[26px] bg-[#131019]/90 px-8 py-10 backdrop-blur-xl transition group-hover:bg-[#131019]/75">
-                    <span
-                      className="grid h-14 w-14 place-items-center rounded-2xl transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-110"
-                      style={{ background: `${portal.from}1f` }}
-                    >
-                      <Icon size={28} style={{ color: portal.from }} />
-                    </span>
-                    <span className="mt-1 text-2xl font-bold tracking-[0.22em] sm:text-3xl">
-                      {portal.label}
-                    </span>
-                    <span className="text-xs text-white/50">{portal.copy}</span>
-                    <span
-                      className="mt-3 h-[3px] w-0 rounded-full transition-all duration-500 group-hover:w-24"
-                      style={{ background: portal.to }}
-                    />
-                  </span>
-                </MagneticButton>
-              </motion.div>
-            );
-          })}
-
-          {/* Locked preview — feature not live yet */}
-          <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.94 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.28 + PORTALS.length * 0.12, ease: [0.16, 1, 0.3, 1] }}
-            className="flex justify-center"
+      {/* Primary entries */}
+      <section className="wrap mt-10">
+        <div className="grid gap-4 md:grid-cols-3">
+          <Link
+            href="/games"
+            className="tile-hover group relative flex h-64 flex-col justify-end overflow-hidden rounded-lg border border-line p-5"
           >
-            <div className="relative w-full cursor-not-allowed rounded-[28px] border border-white/10 bg-white/[0.02] px-8 py-10">
-              <span className="absolute right-4 top-4 flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] uppercase tracking-[0.2em] text-white/45">
-                <Lock size={10} /> Coming soon
-              </span>
-              <span className="flex h-full w-full flex-col items-center justify-center gap-2 text-center opacity-50">
-                <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white/5">
-                  <LOCKED_PORTAL.icon size={28} className="text-white/50" />
-                </span>
-                <span className="mt-1 text-2xl font-bold tracking-[0.22em] text-white/60 sm:text-3xl">
-                  {LOCKED_PORTAL.label}
-                </span>
-                <span className="text-xs text-white/40">{LOCKED_PORTAL.copy}</span>
-              </span>
+            <img
+              src={HERO_MEDIA.games}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent" />
+            <div className="relative">
+              <Gamepad2 size={22} className="mb-3 text-brand" />
+              <p className="text-2xl font-extrabold tracking-tight text-white">
+                GAMES
+              </p>
+              <p className="mt-1 flex items-center gap-1 text-sm font-medium text-mist/85">
+                Steam, Xbox, and Ubisoft accounts
+                <ArrowRight
+                  size={15}
+                  className="transition-transform group-hover:translate-x-1"
+                />
+              </p>
             </div>
-          </motion.div>
+          </Link>
+
+          <Link
+            href="/ott"
+            className="tile-hover group relative flex h-64 flex-col justify-end overflow-hidden rounded-lg border border-line p-5"
+          >
+            <img
+              src={HERO_MEDIA.ott}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent" />
+            <div className="relative">
+              <Tv size={22} className="mb-3 text-brand" />
+              <p className="text-2xl font-extrabold tracking-tight text-white">
+                OTT
+              </p>
+              <p className="mt-1 flex items-center gap-1 text-sm font-medium text-mist/85">
+                Netflix, Spotify, and more packages
+                <ArrowRight
+                  size={15}
+                  className="transition-transform group-hover:translate-x-1"
+                />
+              </p>
+            </div>
+          </Link>
+
+          <div
+            aria-disabled="true"
+            className="relative flex h-64 cursor-not-allowed flex-col justify-end overflow-hidden rounded-lg border border-dashed border-line bg-panel/50 p-5"
+          >
+            <div className="relative">
+              <Lock size={22} className="mb-3 text-fog/60" />
+              <p className="text-2xl font-extrabold tracking-tight text-fog/60">
+                TOPUP
+              </p>
+              <p className="mt-1 inline-flex items-center gap-2 text-sm font-medium text-fog/60">
+                <span className="rounded-sm border border-line px-1.5 py-px text-[10px] font-bold tracking-widest">
+                  COMING SOON
+                </span>
+              </p>
+            </div>
+          </div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9, duration: 0.8 }}
-          className="mt-14 grid w-full max-w-3xl gap-3 sm:grid-cols-3"
-        >
-          {TRUST.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={item.title}
-                className="glass flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition hover:border-white/25"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/30 to-cyan-400/30">
-                  <Icon size={16} />
-                </span>
-                <span>
-                  <span className="block text-[13px] font-medium">{item.title}</span>
-                  <span className="block text-[11px] text-white/45">{item.copy}</span>
+        {/* Secondary top-level actions */}
+        <div className="mt-4 flex flex-wrap gap-3">
+          {user ? (
+            <Link href="/account" className="btn btn-dark px-5 py-3 text-sm">
+              <LogIn size={16} /> Account
+            </Link>
+          ) : (
+            <Link href="/login" className="btn btn-dark px-5 py-3 text-sm">
+              <LogIn size={16} /> Login
+            </Link>
+          )}
+          <Link href="/orders" className="btn btn-dark px-5 py-3 text-sm">
+            <ClipboardList size={16} /> My Orders
+          </Link>
+          <a
+            href={SUPPORT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-dark px-5 py-3 text-sm"
+          >
+            <MessagesSquare size={16} /> Support <ArrowUpRight size={14} />
+          </a>
+        </div>
+      </section>
+
+      {/* How ordering works */}
+      <section className="wrap mt-20">
+        <p className="eyebrow">How ordering works</p>
+        <div className="mt-6 grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              icon: Gamepad2,
+              title: "Pick your product",
+              body: "Choose a game, an OTT package, or the Ubisoft library pass.",
+            },
+            {
+              icon: Wallet,
+              title: "Pay with bKash or Nagad",
+              body: "Send the exact amount to the merchant number shown at checkout.",
+            },
+            {
+              icon: Smartphone,
+              title: "Submit the transaction ID",
+              body: "Paste the TrxID from your payment app into the order form.",
+            },
+            {
+              icon: BadgeCheck,
+              title: "Get access after verification",
+              body: "We confirm the payment manually and reveal your credentials in My Orders.",
+            },
+          ].map((step, i) => (
+            <div key={step.title} className="bg-panel p-6">
+              <div className="flex items-center justify-between">
+                <step.icon size={20} className="text-brand" />
+                <span className="text-3xl font-extrabold tracking-tight text-line">
+                  0{i + 1}
                 </span>
               </div>
-            );
-          })}
-        </motion.div>
-      </section>
-
-      {/* ── Brand marquee ── */}
-      <section className="relative mb-16 overflow-hidden py-6">
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#0c0a12] to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#0c0a12] to-transparent" />
-        <motion.div
-          className="flex w-max gap-10"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{ duration: 26, ease: "linear", repeat: Infinity }}
-        >
-          {[...MARQUEE, ...MARQUEE].map((slug, index) => (
-            <div
-              key={`${slug}-${index}`}
-              className="flex items-center gap-3 opacity-45 transition hover:opacity-100"
-            >
-              <PlatformLogo slug={slug} size={34} />
-              <span className="text-xs uppercase tracking-[0.25em] text-white/60">
-                {slug.replace(/-/g, " ")}
-              </span>
+              <p className="mt-5 font-bold text-white">{step.title}</p>
+              <p className="mt-2 text-sm leading-6 text-fog">{step.body}</p>
             </div>
           ))}
-        </motion.div>
-      </section>
-
-      {/* ── How it works ── */}
-      <section className="mb-24 grid gap-4 md:grid-cols-4">
-        {[
-          { step: "01", title: "Pick your product", copy: "Gaming account or OTT plan, shared or personal." },
-          { step: "02", title: "Pay with bKash / Nagad", copy: "Send money, drop the transaction ID." },
-          { step: "03", title: "We verify", copy: "Manual check, usually under 10 minutes." },
-          { step: "04", title: "Credentials unlocked", copy: "Login details appear inside My Orders." },
-        ].map((item, index) => (
-          <motion.div
-            key={item.step}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.5, delay: index * 0.08 }}
-            className="glass rounded-2xl p-5"
-          >
-            <span className="text-gradient text-2xl font-bold">{item.step}</span>
-            <p className="mt-2 text-sm font-medium">{item.title}</p>
-            <p className="mt-1 text-xs leading-relaxed text-white/45">{item.copy}</p>
-          </motion.div>
-        ))}
+        </div>
+        <p className="mt-5 text-xs font-medium tracking-wide text-fog/70">
+          Manual verification on every order | No card required | All prices in
+          BDT
+        </p>
       </section>
     </div>
   );

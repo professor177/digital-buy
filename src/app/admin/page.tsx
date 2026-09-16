@@ -1,13 +1,14 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { isAdmin } from "@/lib/auth";
+import { AdminApp } from "@/components/admin";
 
-import { getSessionAdmin } from "@/lib/admin-auth";
-import AdminDashboard from "@/components/admin/AdminDashboard";
-
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 
 export default async function AdminPage() {
-  const admin = await getSessionAdmin();
-  if (!admin) redirect("/admin/login");
-
-  return <AdminDashboard username={admin.username} />;
+  const authed = await isAdmin();
+  return (
+    <div className="wrap fade-up py-10 sm:py-14">
+      <AdminApp initialAuthed={authed} />
+    </div>
+  );
 }
