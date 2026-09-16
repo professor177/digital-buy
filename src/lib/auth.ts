@@ -28,22 +28,35 @@ export async function destroySession(): Promise<void> {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (token) {
-    await db.delete(sessions).where(eq(sessions.token, token));
+    try {
+      await db.delete(sessions).where(eq(sessions.token, token));
+    } catch (err) {
+      console.error("Session cleanup failed:", err);
+    }
   }
   jar.delete(SESSION_COOKIE);
 }
 
+/**
+ * Runs inside the root layout on every page. It must NEVER throw: a database
+ * or schema problem should render the page anonymously, not crash the shell.
+ */
 export async function getSessionUser(): Promise<User | null> {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const rows = await db
-    .select({ user: users })
-    .from(sessions)
-    .innerJoin(users, eq(sessions.userId, users.id))
-    .where(and(eq(sessions.token, token), gt(sessions.expiresAt, new Date())))
-    .limit(1);
-  return rows[0]?.user ?? null;
+  try {
+    const rows = await db
+      .select({ user: users })
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(and(eq(sessions.token, token), gt(sessions.expiresAt, new Date())))
+      .limit(1);
+    return rows[0]?.user ?? null;
+  } catch (err) {
+    console.error("Session lookup failed:", err);
+    return null;
+  }
 }
 
 function adminSignature(key: string): string {
