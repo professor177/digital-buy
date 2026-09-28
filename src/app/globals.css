@@ -1,0 +1,206 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-steam: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-xbox: var(--font-chakra), ui-sans-serif, system-ui, sans-serif;
+  --font-editorial: var(--font-instrument), Georgia, serif;
+
+  --color-ink: #0a0c0b;
+  --color-panel: #101413;
+  --color-panel2: #141917;
+  --color-line: #202724;
+  --color-fog: #94a39b;
+  --color-mist: #c9d4cd;
+  --color-brand: #35e27f;
+  --color-brand-dim: #1fae5c;
+
+  --color-steam-bg: #171d25;
+  --color-steam-panel: #1b2838;
+  --color-steam-panel2: #233549;
+  --color-steam-hi: #2a475e;
+  --color-steam-blue: #66c0f4;
+  --color-steam-text: #c7d5e0;
+  --color-steam-dim: #8d97a3;
+
+  --color-xbox-bg: #0c0f0c;
+  --color-xbox-panel: #131913;
+  --color-xbox-line: #243524;
+  --color-xbox-green: #107c10;
+  --color-xbox-hi: #9bf00b;
+  --color-xbox-dim: #8da08d;
+
+  --color-screen: #0b0b0d;
+  --color-screen-panel: #141416;
+  --color-screen-line: #27272c;
+
+  --color-bkash: #e2136e;
+  --color-nagad: #f6921e;
+
+  --shadow-tile: 0 18px 44px -18px rgb(0 0 0 / 0.65);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-mist);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-brand);
+  color: #05130b;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: #2a322e;
+  border: 2px solid var(--color-ink);
+  border-radius: 8px;
+}
+
+.wrap {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 76rem;
+  padding-inline: 1.25rem;
+}
+@media (min-width: 640px) {
+  .wrap {
+    padding-inline: 2rem;
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.btn-brand {
+  background: var(--color-brand);
+  color: #06140c;
+}
+.btn-brand:hover {
+  background: #57ee9a;
+}
+
+.btn-dark {
+  background: #1c2320;
+  color: var(--color-mist);
+  border-color: var(--color-line);
+}
+.btn-dark:hover {
+  border-color: #37413c;
+  background: #222b27;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-mist);
+  border-color: var(--color-line);
+}
+.btn-outline:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+.field {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--color-line);
+  background: #0e1210;
+  color: var(--color-mist);
+  padding: 0.7rem 0.85rem;
+  font-size: 0.925rem;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.field::placeholder {
+  color: #5d6a63;
+}
+.field:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgb(53 226 127 / 0.14);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-line);
+  padding: 0.28rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-fog);
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-fog);
+}
+
+.tile-hover {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.tile-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-tile);
+}
+
+.fade-up {
+  animation: fadeUp 0.5s cubic-bezier(0.21, 0.7, 0.35, 1) both;
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
