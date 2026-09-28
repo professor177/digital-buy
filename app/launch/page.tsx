@@ -1,0 +1,2 @@
+export const metadata={robots:{index:false,follow:false}};
+export default function LaunchPage(){return <div className="container py-28 text-center"><div className="mx-auto grid h-14 w-14 place-items-center border border-sky-500/50 bg-sky-500/10 font-black">DB</div><h1 className="title-lg mt-6">Digital Buy is being prepared for launch.</h1><p className="muted mx-auto mt-5 max-w-2xl leading-7">Production access stays closed until the custom domain, live environment variables, favicon, Privacy Policy and Terms & Conditions have been verified.</p></div>}

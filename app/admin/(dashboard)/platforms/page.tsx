@@ -1,0 +1,4 @@
+import { requireAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { PlatformForm } from "@/components/taxonomy-form";
+export default async function AdminPlatforms(){await requireAdmin();const admin=createAdminClient();const[{data:items,error},{data:categories}]=await Promise.all([admin.from("platforms").select("id,category_id,name,slug,description,accent,active").order("sort_order"),admin.from("categories").select("id,name").order("sort_order")]);if(error)throw new Error(error.message);return <div><h2 className="text-2xl font-black">Platforms</h2><p className="muted mt-1 text-sm">Manage Steam, Xbox, Ubisoft, OTT services and future platforms.</p><div className="mt-6 grid gap-4"><PlatformForm categories={categories||[]}/>{(items||[]).map(item=><PlatformForm key={item.id} item={item} categories={categories||[]}/>)}</div></div>}

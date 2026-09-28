@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #090c12;
+  --panel: #10151e;
+  --panel-2: #151c27;
+  --line: #263142;
+  --text: #f7f9fc;
+  --muted: #9aa7b8;
+  --blue: #34a8ff;
+  --cyan: #50e3c2;
+  --danger: #ff5f6d;
+  --warning: #ffc857;
+  --success: #50d890;
+}
+
+* { box-sizing: border-box; }
+html { color-scheme: dark; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(52,168,255,.12), transparent 34rem),
+    linear-gradient(180deg, #080b10 0%, #0b0f16 100%);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; text-decoration: none; }
+button, input, textarea, select { font: inherit; }
+button, a, input, textarea, select { outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--blue); }
+::selection { background: rgba(52,168,255,.35); }
+
+.container { width: min(1180px, calc(100% - 32px)); margin-inline: auto; }
+.surface { background: rgba(16,21,30,.9); border: 1px solid var(--line); box-shadow: 0 18px 60px rgba(0,0,0,.22); }
+.card { background: linear-gradient(180deg, rgba(21,28,39,.98), rgba(13,18,27,.98)); border: 1px solid var(--line); }
+.muted { color: var(--muted); }
+.eyebrow { letter-spacing: .14em; text-transform: uppercase; font-size: .74rem; font-weight: 800; color: #84cfff; }
+.title-xl { font-size: clamp(2.5rem, 7vw, 5.7rem); line-height: .95; letter-spacing: -.055em; font-weight: 900; }
+.title-lg { font-size: clamp(2rem, 4vw, 3.6rem); line-height: 1; letter-spacing: -.045em; font-weight: 900; }
+.btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: .55rem; border: 1px solid transparent; padding: .72rem 1rem; font-weight: 800; transition: transform .16s ease, background .16s ease, border-color .16s ease, color .16s ease; cursor: pointer; border-radius: 8px; }
+.btn:hover { transform: translateY(-1px); }
+.btn:disabled { cursor: not-allowed; opacity: .5; transform: none; }
+.btn-primary { background: #f7f9fc; color: #081018; }
+.btn-primary:hover { background: #dcecff; }
+.btn-secondary { background: #111927; border-color: #30405a; color: #eef6ff; }
+.btn-secondary:hover { border-color: #4c6a91; background: #162235; }
+.btn-danger { background: #2b1116; border-color: #5a232d; color: #ffabb3; }
+.input, .select, .textarea { width: 100%; color: var(--text); background: #0c1119; border: 1px solid #2a3546; border-radius: 7px; padding: .78rem .85rem; }
+.input::placeholder, .textarea::placeholder { color: #68778d; }
+.input:focus, .select:focus, .textarea:focus { border-color: #4daeea; box-shadow: 0 0 0 3px rgba(52,168,255,.12); }
+.label { display: block; font-size: .82rem; font-weight: 800; color: #ccd7e5; margin-bottom: .4rem; }
+.help { font-size: .78rem; color: #8290a5; margin-top: .35rem; }
+.badge { display: inline-flex; align-items: center; border: 1px solid #344054; padding: .28rem .5rem; border-radius: 5px; font-size: .72rem; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; }
+.hr { height: 1px; background: var(--line); border: 0; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+
+.intro-screen { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #070a0f; }
+.intro-mark { width: 78px; height: 78px; border: 1px solid #3a4d68; display: grid; place-items: center; font-weight: 950; font-size: 1.45rem; letter-spacing: -.05em; animation: markIn .7s cubic-bezier(.2,.8,.2,1) both; }
+.intro-line { width: 160px; height: 2px; background: #1c2736; overflow: hidden; margin-top: 20px; }
+.intro-line::after { content: ""; display: block; height: 100%; width: 100%; background: #43b7ff; transform-origin: left; animation: loadLine .85s ease-out both; }
+@keyframes markIn { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes loadLine { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }

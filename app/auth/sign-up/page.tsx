@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { SignUpForm } from "@/components/auth-forms";
+export default function SignUpPage(){return <div className="container py-20"><div className="surface mx-auto max-w-md p-6 sm:p-8"><p className="eyebrow">New account</p><h1 className="mt-3 text-3xl font-black">Create your Digital Buy account</h1><p className="muted mt-3 text-sm leading-6">Your email must be verified before the account can place or view protected orders.</p><div className="mt-6"><SignUpForm/></div><p className="muted mt-6 text-sm">Already registered? <Link className="text-sky-300" href="/auth/login">Login</Link></p></div></div>}

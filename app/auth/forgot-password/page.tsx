@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { ForgotPasswordForm } from "@/components/auth-forms";
+export default function ForgotPasswordPage(){return <div className="container py-20"><div className="surface mx-auto max-w-md p-6 sm:p-8"><p className="eyebrow">Account recovery</p><h1 className="mt-3 text-3xl font-black">Reset your password</h1><p className="muted mt-3 text-sm leading-6">Enter your account email. For privacy, the response does not reveal whether the address is registered.</p><div className="mt-6"><ForgotPasswordForm/></div><p className="mt-6 text-sm"><Link className="text-sky-300" href="/auth/login">Back to login</Link></p></div></div>}
