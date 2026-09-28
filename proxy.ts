@@ -8,8 +8,11 @@ export async function proxy(request: NextRequest) {
   } catch {}
 
   const requestHost = request.headers.get("host") || "";
+  const isVercelPreviewHost = requestHost.endsWith(".vercel.app");
+
   const productionLocked =
     process.env.VERCEL_ENV === "production" &&
+    !isVercelPreviewHost &&
     (process.env.LAUNCH_READY !== "true" ||
       !configuredHost ||
       requestHost !== configuredHost);
@@ -24,11 +27,9 @@ export async function proxy(request: NextRequest) {
   }
 
   let response = NextResponse.next({ request });
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  // Keep setup/launch pages reachable before Supabase is configured.
   if (!supabaseUrl || !supabaseKey) {
     return response;
   }
@@ -50,9 +51,7 @@ export async function proxy(request: NextRequest) {
 
   try {
     await supabase.auth.getUser();
-  } catch {
-    // A temporary auth/backend outage should not turn public pages into 500s.
-  }
+  } catch {}
 
   return response;
 }
