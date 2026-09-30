@@ -13,7 +13,7 @@ export default async function Shop({ params, searchParams }: { params: Promise<{
   try {
     const s = await db().collection("products").where("categoryId", "==", cat).get();
     list = s.docs.map((d) => ({ id: d.id, ...d.data() } as any)).filter((p) => p.isAvailable && p.accountType === t && (!q || p.name.toLowerCase().includes(q.toLowerCase().slice(0, 60)))).sort((a, b) => a.name.localeCompare(b.name));
-  } catch { failed = true; }
+  } catch (e) { console.error("shop load failed", e); failed = true; }
   const tab = (v: string) => `/shop/${cat}?type=${v}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
   const by = new Map<string, any[]>(); list.forEach((p) => by.set(p.platformName, [...(by.get(p.platformName) ?? []), p]));
   return (
