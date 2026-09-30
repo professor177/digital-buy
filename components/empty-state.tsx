@@ -1,1 +1,0 @@
-export function EmptyState({ title, body }: { title: string; body: string }) { return <div className="surface p-8 text-center"><h3 className="text-lg font-extrabold">{title}</h3><p className="muted mx-auto mt-2 max-w-xl text-sm">{body}</p></div>; }
