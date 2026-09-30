@@ -1,2 +1,0 @@
-"use client";
-export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) { return <div className="container py-24 text-center"><p className="eyebrow">Something went wrong</p><h1 className="title-lg mt-4">The page could not be loaded.</h1><p className="muted mx-auto mt-4 max-w-xl">Your order was not automatically changed. You can retry this page safely.</p><button className="btn btn-primary mt-7" onClick={reset}>Try again</button></div>; }
